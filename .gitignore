@@ -1,0 +1,59 @@
+# Environment variables and credentials
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+!.env.example
+!**/.env.example
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.pytest_cache/
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Node & Frontend
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+frontend/dist/
+.vite/
+**/.vite/
+*.timestamp-*.mjs
+*.tsbuildinfo
+
+# Storage runtime generated files (keep directory structure with .gitkeep)
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+backend/storage/processed/*
+!backend/storage/processed/.gitkeep
+backend/storage/evidence/*
+!backend/storage/evidence/.gitkeep
+backend/storage/reports/*
+!backend/storage/reports/.gitkeep
+backend/storage/scratch_*
+backend/storage/sessions.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, ::before, ::after {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  }
+
+  :root {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+    letter-spacing: -0.012em;
+    background-color: #000000 !important;
+  }
+
+  html, body, #root {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.012em;
+    background-color: #000000 !important;
+    color: #f8fafc;
+    scroll-behavior: smooth;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+
+  button, input, textarea, select, optgroup, option {
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.01em;
+  }
+
+  code, pre, kbd, samp, .font-mono {
+    font-family: 'Inter', sans-serif !important;
+    font-feature-settings: 'tnum' on, 'cv02' on, 'cv03' on;
+  }
+}
+
+/* Dark Glassmorphism for Space-themed panels so orbital Earth background shines through */
+.bg-space-950,
+[class*="bg-space-950"] {
+  background-color: rgba(6, 8, 14, 0.78) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.bg-space-900,
+[class*="bg-space-900"] {
+  background-color: rgba(10, 13, 20, 0.70) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.bg-space-850,
+[class*="bg-space-850"] {
+  background-color: rgba(15, 18, 28, 0.65) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.border-space-800,
+[class*="border-space-800"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.border-space-700,
+[class*="border-space-700"] {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Geospatial Background Grid Pattern */
+.bg-geo-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+}
+
+/* Subtle Radar Scan Wave */
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radar-sweep 8s linear infinite;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
