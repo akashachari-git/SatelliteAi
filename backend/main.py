@@ -1,6 +1,5 @@
 """
 SatQuery AI - FastAPI Remote Sensing Backend Application
-Problem Statement 26167 (SIH):
 An Interactive Vision-Language Assistant for Multimodal Remote Sensing Image Analysis through Text Queries.
 """
 import time
@@ -18,6 +17,7 @@ from .schemas import (
     AnalyzeResponse,
     ChangeAnalysisRequest,
     OpticalSARAnalysisRequest,
+    CursorFeatureRequest,
     ModelInfoSchema,
     HealthResponse
 )
@@ -36,9 +36,22 @@ app = FastAPI(
 )
 
 # CORS Middleware to allow communication from UI / proxy
+import os
+_env_origins = os.environ.get("ALLOWED_ORIGINS")
+if _env_origins:
+    _allowed_origins = [o.strip() for o in _env_origins.split(",") if o.strip()]
+else:
+    # Default allowed origins for local development (no wildcard in production)
+    _allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -179,3 +192,36 @@ async def get_history():
     Returns historical mission intelligence records.
     """
     return history_store.get_all()
+
+@app.post("/api/geospatial/cursor-feature")
+async def query_cursor_feature(request: CursorFeatureRequest):
+    """
+    Exposes backend utility for cursor inspection / coordinate querying:
+    pixel -> latitude/longitude -> relevant evidence region.
+    """
+    from .geospatial.georeference import GeoreferenceEngine
+    return GeoreferenceEngine.query_cursor_feature(
+        col=request.x,
+        row=request.y,
+        metadata=request.metadata,
+        features=request.features
+    )
+
+@app.post("/api/report/generate")
+async def generate_report(request: Dict[str, Any]):
+    """
+    Generates a structured, non-fabricated Markdown and JSON intelligence report
+    from real AnalyzeResponse data.
+    """
+    from .reporting import generate_analysis_markdown
+    result_data = request.get("result") if "result" in request else request
+    md_content = generate_analysis_markdown(result_data)
+    report_id = f"report_{int(time.time())}"
+    return {
+        "reportId": report_id,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        "markdown": md_content,
+        "json": result_data,
+        "filename": f"{report_id}.md"
+    }
+

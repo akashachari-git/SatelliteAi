@@ -9,12 +9,27 @@ from pydantic import BaseModel, Field
 class BoundingBox(BaseModel):
     id: str
     label: str
-    confidence: float
+    confidence: Optional[float] = None
     x: float
     y: float
     width: float
     height: float
     description: str
+    projectedBbox: Optional[Dict[str, float]] = None
+    geographicBbox: Optional[Dict[str, float]] = None
+    centerLatLon: Optional[Dict[str, float]] = None
+
+class GeospatialEvidence(BaseModel):
+    status: str = "unavailable"  # "available" | "partial" | "unavailable"
+    crs: Optional[str] = None
+    bounds: Optional[Dict[str, float]] = None
+    resolution: Optional[str] = None
+    pixelCoordinates: Optional[Dict[str, float]] = None
+    geographicCoordinates: Optional[Dict[str, float]] = None
+    geographicBounds: Optional[Dict[str, float]] = None
+    area: Optional[Dict[str, float]] = None
+    alignmentStatus: Optional[str] = None  # "geospatially aligned" | "pixel-aligned" | "alignment unavailable"
+    limitations: List[str] = Field(default_factory=list)
 
 class ChangeMetric(BaseModel):
     increasedAreaKm2: float
@@ -38,10 +53,10 @@ class GeoTIFFMetadata(BaseModel):
     width: int
     height: int
     bands: int
-    crs: str
-    geotransform: List[float]
-    resolution: str
-    bounds: Dict[str, float]
+    crs: Optional[str] = None
+    geotransform: Optional[List[float]] = None
+    resolution: Optional[str] = None
+    bounds: Optional[Dict[str, float]] = None
     datatype: str
     modality: str
     sensor: str
@@ -79,7 +94,7 @@ class AnalyzeResponse(BaseModel):
     taskType: str
     selectedModel: str
     answer: str
-    confidence: float
+    confidence: Optional[float] = None
     evidence: List[str]
     boundingBoxes: Optional[List[BoundingBox]] = None
     changeMetric: Optional[ChangeMetric] = None
@@ -91,6 +106,9 @@ class AnalyzeResponse(BaseModel):
     isSimulation: bool = False
     timestamp: str
     inputInformation: str
+    agentPlan: Optional[Dict[str, Any]] = None
+    evidenceHierarchy: Optional[Dict[str, Any]] = None
+    geospatialEvidence: Optional[Dict[str, Any]] = None
 
 class ChangeAnalysisRequest(BaseModel):
     query: str
@@ -101,6 +119,12 @@ class OpticalSARAnalysisRequest(BaseModel):
     query: str
     opticalImage: Dict[str, Any]
     sarImage: Dict[str, Any]
+
+class CursorFeatureRequest(BaseModel):
+    x: float
+    y: float
+    metadata: Optional[Dict[str, Any]] = None
+    features: Optional[List[Dict[str, Any]]] = None
 
 class ModelInfoSchema(BaseModel):
     id: str

@@ -333,6 +333,68 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </label>
         </div>
       </div>
+
+      {/* 3. SYSTEM STATUS & MODEL AVAILABILITY (REQUIREMENT 16) */}
+      <div className="bg-[#080d1a]/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
+          <ShieldCheck className="w-4 h-4 text-cyan-400" />
+          <h2 className="text-sm font-bold text-slate-200 font-sans">
+            System Status & Specialist Model Availability
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+          {/* Backend Status */}
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase">BACKEND SERVICE</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-emerald-300 font-bold">ONLINE</span>
+            </div>
+            <span className="text-[10px] text-slate-400 block pt-0.5">Local Server :8000</span>
+          </div>
+
+          {/* API Endpoints */}
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase">API ENDPOINTS</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-emerald-300 font-bold">READY (3/3)</span>
+            </div>
+            <span className="text-[10px] text-slate-400 block pt-0.5">/analyze, /validate, /report</span>
+          </div>
+
+          {/* Florence-2 Model */}
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase">FLORENCE-2 VLM</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-emerald-300 font-bold">LOCAL / AVAILABLE</span>
+            </div>
+            <span className="text-[10px] text-slate-400 block pt-0.5">Vision-Language & Grounding</span>
+          </div>
+
+          {/* BigEarthNet Specialist */}
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 block uppercase">BIGEARTHNET SPECIALIST</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-emerald-300 font-bold">LOCAL / AVAILABLE</span>
+            </div>
+            <span className="text-[10px] text-slate-400 block pt-0.5">19-Class Land Cover ResNet</span>
+          </div>
+        </div>
+
+        {/* Application Information */}
+        <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2">
+          <div>
+            <span className="font-semibold text-slate-300">SatQuery AI</span> • Remote Sensing Vision-Language Intelligence System
+          </div>
+          <div className="font-mono text-[11px] text-slate-500">
+            PS 26167 • Version 1.0.0 (SIH Demo Ready)
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

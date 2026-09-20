@@ -8,28 +8,58 @@ import json
 import time
 from typing import Dict, Any, List, Optional, Tuple, Iterator
 
-# BigEarthNet 19-Class Corine Land Cover (CLC) Standard Nomenclature
-BIGEARTHNET_19_CLASSES = [
-    "Continuous urban fabric",
-    "Discontinuous urban fabric",
-    "Industrial or commercial units",
-    "Arable land",
-    "Permanent crops",
-    "Pastures",
-    "Complex cultivation patterns",
-    "Land principally occupied by agriculture",
-    "Broad-leaved forest",
-    "Coniferous forest",
-    "Mixed forest",
-    "Natural grasslands and sclerophyllous vegetation",
-    "Transitional woodland-shrub",
-    "Beaches, dunes, sands",
-    "Inland wetlands",
-    "Coastal wetlands",
-    "Inland waters",
-    "Marine waters",
-    "Bare rock and sparsely vegetated areas"
-]
+def load_bigearthnet_classes(txt_path: Optional[str] = None) -> List[str]:
+    """Loads official BigEarthNet Corine Land Cover classes from BigEarthNet.txt."""
+    search_paths = [
+        txt_path,
+        os.path.join(os.path.dirname(__file__), "..", "..", "BigEarthNet.txt"),
+        os.path.join(os.getcwd(), "BigEarthNet.txt"),
+    ]
+    for p in search_paths:
+        if p and os.path.exists(p):
+            try:
+                classes = []
+                with open(p, "r", encoding="utf-8") as f:
+                    in_classes = False
+                    for line in f:
+                        line = line.strip()
+                        if line == "[CLASSES]":
+                            in_classes = True
+                            continue
+                        elif line.startswith("[") and in_classes:
+                            break
+                        if in_classes and ":" in line:
+                            cls_name = line.split(":", 1)[1].strip()
+                            if cls_name:
+                                classes.append(cls_name)
+                if len(classes) == 19:
+                    return classes
+            except Exception:
+                pass
+    return [
+        "Continuous urban fabric",
+        "Discontinuous urban fabric",
+        "Industrial or commercial units",
+        "Arable land",
+        "Permanent crops",
+        "Pastures",
+        "Complex cultivation patterns",
+        "Land principally occupied by agriculture",
+        "Broad-leaved forest",
+        "Coniferous forest",
+        "Mixed forest",
+        "Natural grasslands and sclerophyllous vegetation",
+        "Transitional woodland-shrub",
+        "Beaches, dunes, sands",
+        "Inland wetlands",
+        "Coastal wetlands",
+        "Inland waters",
+        "Marine waters",
+        "Bare rock and sparsely vegetated areas"
+    ]
+
+# BigEarthNet 19-Class Corine Land Cover (CLC) Standard Nomenclature loaded from BigEarthNet.txt
+BIGEARTHNET_19_CLASSES = load_bigearthnet_classes()
 
 class BigEarthNetConfig:
     """

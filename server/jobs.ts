@@ -143,7 +143,7 @@ function seedInitialMissions() {
       errorInfo: null,
       reportDossier: {
         dossierId: 'dossier-sq-job-20260907-194200-a101',
-        format: 'SIH-GeoJSON-v2.4',
+        format: 'OGC-GeoJSON-v1.0',
         generatedAt: '2026-09-07T19:42:04.000Z',
         reproducibleSeed: 'seed-mumbai-2026',
       },
@@ -194,7 +194,7 @@ function seedInitialMissions() {
       errorInfo: null,
       reportDossier: {
         dossierId: 'dossier-sq-job-20260907-181500-b202',
-        format: 'SIH-GeoJSON-v2.4',
+        format: 'OGC-GeoJSON-v1.0',
         generatedAt: '2026-09-07T18:15:05.000Z',
         reproducibleSeed: 'seed-bengaluru-2026',
       },
@@ -245,7 +245,7 @@ function seedInitialMissions() {
       errorInfo: null,
       reportDossier: {
         dossierId: 'dossier-sq-job-20260907-163000-c303',
-        format: 'SIH-GeoJSON-v2.4',
+        format: 'OGC-GeoJSON-v1.0',
         generatedAt: '2026-09-07T16:30:05.000Z',
         reproducibleSeed: 'seed-mangalore-2026',
       },
@@ -590,7 +590,7 @@ async function runJobExecutionStateMachine(jobId: string, enableDemoSimulation: 
 
   job.reportDossier = {
     dossierId: `dossier-${job.id}`,
-    format: 'SIH-GeoJSON-v2.4',
+    format: 'OGC-GeoJSON-v1.0',
     generatedAt: new Date().toISOString(),
     reproducibleSeed: `seed-${crypto.randomBytes(3).toString('hex')}`,
   };
@@ -761,7 +761,7 @@ export function generateJobReport(jobId: string, format: 'json' | 'geojson' | 't
     return {
       type: 'FeatureCollection',
       properties: {
-        missionId: 'SIH-PS-26167',
+        missionId: 'SatQuery-Mission',
         analysisId: job.id,
         userQuery: job.query,
         detectedModality: job.detectedModality,
@@ -798,7 +798,7 @@ export function generateJobReport(jobId: string, format: 'json' | 'geojson' | 't
   if (format === 'text') {
     return `================================================================================
 SATQUERY AI REMOTE SENSING INTELLIGENCE DOSSIER
-MISSION: SIH PROBLEM STATEMENT 26167
+MISSION: EARTH OBSERVATION SATELLITE INTELLIGENCE
 ANALYSIS ID: ${job.id}
 TIMESTAMP:   ${job.createdAt}
 STATUS:      ${job.status}
@@ -834,7 +834,7 @@ REPRODUCIBILITY CERTIFICATE: ${job.reportDossier?.reproducibleSeed || 'Certified
   return {
     metadata: {
       platform: 'SatQuery AI Remote Sensing Intelligence System',
-      problemStatement: 'SIH PS-26167',
+      analysisType: 'Earth Observation Analysis',
       analysisId: job.id,
       reproducibleSeed: job.reportDossier?.reproducibleSeed,
       generatedAt: new Date().toISOString(),

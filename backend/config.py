@@ -33,5 +33,5 @@ API_TITLE = "SatQuery AI Remote Sensing Backend"
 API_VERSION = "2.0.0"
 API_DESCRIPTION = (
     "Production FastAPI backend for SatQuery AI: An Interactive Vision-Language Assistant "
-    "for Multimodal Remote Sensing Image Analysis through Text Queries (SIH Problem Statement 26167)."
+    "for Multimodal Remote Sensing Image Analysis through Text Queries."
 )

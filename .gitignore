@@ -6,3 +6,30 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+backend/cache/
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model weights & caches (>100MB exceeds GitHub limits)
+*.bin
+*.incomplete
+.cache/
+**/__pycache__/
+**/.cache/

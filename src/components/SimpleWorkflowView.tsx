@@ -70,64 +70,19 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
   const [mode, setMode] = useState<AnalysisMode>(initialMode || 'single');
 
   // Input files state
-  const [singleFile, setSingleFile] = useState<FileMetadata | null>(DEMO_PRESETS.single.metadata);
-  const [pastFile, setPastFile] = useState<FileMetadata | null>(DEMO_PRESETS.biTemporal.imageA);
-  const [presentFile, setPresentFile] = useState<FileMetadata | null>(DEMO_PRESETS.biTemporal.imageB);
-  const [opticalFile, setOpticalFile] = useState<FileMetadata | null>(DEMO_PRESETS.opticalSar.optical);
-  const [sarFile, setSarFile] = useState<FileMetadata | null>(DEMO_PRESETS.opticalSar.sar);
+  const [singleFile, setSingleFile] = useState<FileMetadata | null>(null);
+  const [pastFile, setPastFile] = useState<FileMetadata | null>(null);
+  const [presentFile, setPresentFile] = useState<FileMetadata | null>(null);
+  const [opticalFile, setOpticalFile] = useState<FileMetadata | null>(null);
+  const [sarFile, setSarFile] = useState<FileMetadata | null>(null);
 
   // Per-slot prominent validation status state
   const [slotValidation, setSlotValidation] = useState<Record<string, SlotValidationInfo>>({
-    single: {
-      status: 'valid',
-      badge: '✓ Valid Satellite Image',
-      filename: DEMO_PRESETS.single.metadata.name,
-      fileSize: DEMO_PRESETS.single.metadata.size,
-      sensor: DEMO_PRESETS.single.metadata.sensor,
-      gsd: DEMO_PRESETS.single.metadata.gsd,
-      crs: DEMO_PRESETS.single.metadata.crs,
-      modality: DEMO_PRESETS.single.metadata.modality,
-    },
-    past: {
-      status: 'valid',
-      badge: '✓ Valid Satellite Image',
-      filename: DEMO_PRESETS.biTemporal.imageA.name,
-      fileSize: DEMO_PRESETS.biTemporal.imageA.size,
-      sensor: DEMO_PRESETS.biTemporal.imageA.sensor,
-      gsd: DEMO_PRESETS.biTemporal.imageA.gsd,
-      crs: DEMO_PRESETS.biTemporal.imageA.crs,
-      modality: DEMO_PRESETS.biTemporal.imageA.modality,
-    },
-    present: {
-      status: 'valid',
-      badge: '✓ Valid Satellite Image',
-      filename: DEMO_PRESETS.biTemporal.imageB.name,
-      fileSize: DEMO_PRESETS.biTemporal.imageB.size,
-      sensor: DEMO_PRESETS.biTemporal.imageB.sensor,
-      gsd: DEMO_PRESETS.biTemporal.imageB.gsd,
-      crs: DEMO_PRESETS.biTemporal.imageB.crs,
-      modality: DEMO_PRESETS.biTemporal.imageB.modality,
-    },
-    optical: {
-      status: 'valid',
-      badge: '✓ Valid Satellite Image',
-      filename: DEMO_PRESETS.opticalSar.optical.name,
-      fileSize: DEMO_PRESETS.opticalSar.optical.size,
-      sensor: DEMO_PRESETS.opticalSar.optical.sensor,
-      gsd: DEMO_PRESETS.opticalSar.optical.gsd,
-      crs: DEMO_PRESETS.opticalSar.optical.crs,
-      modality: DEMO_PRESETS.opticalSar.optical.modality,
-    },
-    sar: {
-      status: 'valid',
-      badge: '✓ Valid Satellite Image',
-      filename: DEMO_PRESETS.opticalSar.sar.name,
-      fileSize: DEMO_PRESETS.opticalSar.sar.size,
-      sensor: DEMO_PRESETS.opticalSar.sar.sensor,
-      gsd: DEMO_PRESETS.opticalSar.sar.gsd,
-      crs: DEMO_PRESETS.opticalSar.sar.crs,
-      modality: DEMO_PRESETS.opticalSar.sar.modality,
-    },
+    single: { status: 'idle' },
+    past: { status: 'idle' },
+    present: { status: 'idle' },
+    optical: { status: 'idle' },
+    sar: { status: 'idle' },
   });
 
   // Natural language query states for each workflow
@@ -151,11 +106,11 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [analysisFailed, setAnalysisFailed] = useState<boolean>(false);
 
-  // Analysis execution state
+  // Analysis execution state & stages
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [currentResult, setCurrentResult] = useState<AnalysisResult>(
-    SAMPLE_ANALYSIS_PRESETS['What changed between these two dates and where did the change occur?'] ||
-      SAMPLE_ANALYSIS_PRESETS['Describe the land-cover and major objects visible in this image.']
+  const [analysisStage, setAnalysisStage] = useState<string>('Validating inputs...');
+  const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(
+    activeLoadedResult || null
   );
 
   // Drag & drop highlight state
@@ -271,15 +226,20 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
 
       // Check file extension for preview
       let previewUrl = '';
+      let fileDataUri: string | undefined;
       const ext = file.name.split('.').pop()?.toLowerCase();
       if (['png', 'jpg', 'jpeg', 'webp'].includes(ext || '')) {
         previewUrl = URL.createObjectURL(file);
+        try {
+          fileDataUri = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        } catch {}
       } else {
-        if (slot === 'sar') previewUrl = DEMO_PRESETS.opticalSar.sar.previewUrl;
-        else if (slot === 'past') previewUrl = DEMO_PRESETS.biTemporal.imageA.previewUrl;
-        else if (slot === 'present') previewUrl = DEMO_PRESETS.biTemporal.imageB.previewUrl;
-        else if (slot === 'optical') previewUrl = DEMO_PRESETS.opticalSar.optical.previewUrl;
-        else previewUrl = DEMO_PRESETS.single.metadata.previewUrl;
+        previewUrl = URL.createObjectURL(file);
       }
 
       const meta: FileMetadata = {
@@ -287,19 +247,20 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
         name: validation.filename,
         size: validation.fileSize,
         modality: validation.detectedModality,
-        dimensions: validation.dimensions || '2048 × 2048 px',
-        gsd: validation.gsd || (slot === 'sar' ? '1.0m Radar GSD' : '0.5m High-Resolution GSD'),
+        dimensions: validation.dimensions,
+        gsd: validation.gsd,
         acquisitionDate: new Date().toISOString().replace('T', ' ').slice(0, 10),
-        crs: validation.crs || 'EPSG:32643 (WGS 84 / UTM zone 43N)',
-        sensor: validation.sensor || (slot === 'sar' ? 'RISAT-1A / Sentinel-1 CSAR' : 'Sentinel-2B / CartoSat-3 MX'),
+        crs: validation.crs,
+        sensor: validation.sensor,
         previewUrl,
+        fileDataUri,
       };
 
       setSlotValidation((prev) => ({
         ...prev,
         [slot]: {
           status: 'valid',
-          badge: '✓ Valid Satellite Image',
+          badge: '✓ Valid Satellite Raster',
           filename: validation.filename,
           fileSize: validation.fileSize,
           sensor: meta.sensor,
@@ -387,15 +348,18 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
     return true;
   };
 
-  // Sample Preset Loaders
+  // Sample Preset Loaders (Explicitly labeled as Demo Preset)
   const loadSampleSingle = () => {
-    setSingleFile(DEMO_PRESETS.single.metadata);
+    setSingleFile({
+      ...DEMO_PRESETS.single.metadata,
+      isSimulation: true,
+    });
     setSingleQuery('Describe this area.');
     setSlotValidation((prev) => ({
       ...prev,
       single: {
         status: 'valid',
-        badge: '✓ Valid Satellite Image',
+        badge: 'Demo Preset (Synthetic Sample)',
         filename: DEMO_PRESETS.single.metadata.name,
         fileSize: DEMO_PRESETS.single.metadata.size,
         sensor: DEMO_PRESETS.single.metadata.sensor,
@@ -409,14 +373,20 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
   };
 
   const loadSamplePastPresent = () => {
-    setPastFile(DEMO_PRESETS.biTemporal.imageA);
-    setPresentFile(DEMO_PRESETS.biTemporal.imageB);
+    setPastFile({
+      ...DEMO_PRESETS.biTemporal.imageA,
+      isSimulation: true,
+    });
+    setPresentFile({
+      ...DEMO_PRESETS.biTemporal.imageB,
+      isSimulation: true,
+    });
     setBiTemporalQuery('What changed between these two dates and where did the change occur?');
     setSlotValidation((prev) => ({
       ...prev,
       past: {
         status: 'valid',
-        badge: '✓ Valid Satellite Image',
+        badge: 'Demo Preset (Synthetic Sample)',
         filename: DEMO_PRESETS.biTemporal.imageA.name,
         fileSize: DEMO_PRESETS.biTemporal.imageA.size,
         sensor: DEMO_PRESETS.biTemporal.imageA.sensor,
@@ -426,7 +396,7 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
       },
       present: {
         status: 'valid',
-        badge: '✓ Valid Satellite Image',
+        badge: 'Demo Preset (Synthetic Sample)',
         filename: DEMO_PRESETS.biTemporal.imageB.name,
         fileSize: DEMO_PRESETS.biTemporal.imageB.size,
         sensor: DEMO_PRESETS.biTemporal.imageB.sensor,
@@ -440,14 +410,20 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
   };
 
   const loadSampleOpticalSar = () => {
-    setOpticalFile(DEMO_PRESETS.opticalSar.optical);
-    setSarFile(DEMO_PRESETS.opticalSar.sar);
+    setOpticalFile({
+      ...DEMO_PRESETS.opticalSar.optical,
+      isSimulation: true,
+    });
+    setSarFile({
+      ...DEMO_PRESETS.opticalSar.sar,
+      isSimulation: true,
+    });
     setOpticalSarQuery('Use the optical and SAR images together to identify built-up and water-covered regions.');
     setSlotValidation((prev) => ({
       ...prev,
       optical: {
         status: 'valid',
-        badge: '✓ Valid Satellite Image',
+        badge: 'Demo Preset (Synthetic Sample)',
         filename: DEMO_PRESETS.opticalSar.optical.name,
         fileSize: DEMO_PRESETS.opticalSar.optical.size,
         sensor: DEMO_PRESETS.opticalSar.optical.sensor,
@@ -457,7 +433,7 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
       },
       sar: {
         status: 'valid',
-        badge: '✓ Valid Satellite Image',
+        badge: 'Demo Preset (Synthetic Sample)',
         filename: DEMO_PRESETS.opticalSar.sar.name,
         fileSize: DEMO_PRESETS.opticalSar.sar.size,
         sensor: DEMO_PRESETS.opticalSar.sar.sensor,
@@ -599,23 +575,64 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
     }
   };
 
-  const clearCurrentSession = () => {
-    if (mode === 'single') {
-      setSingleFile(null);
-      setSlotValidation((prev) => ({ ...prev, single: null }));
-    } else if (mode === 'bi-temporal') {
-      setPastFile(null);
-      setPresentFile(null);
-      setSlotValidation((prev) => ({ ...prev, past: null, present: null }));
-    } else {
-      setOpticalFile(null);
-      setSarFile(null);
-      setSlotValidation((prev) => ({ ...prev, optical: null, sar: null }));
+  // Judge-Friendly Error Parser for Live Demo Reliability
+  const getJudgeFriendlyErrorMessage = (rawError: string): string => {
+    const err = rawError.toLowerCase();
+    if (err.includes('florence-2 is not available') || (err.includes('florence') && err.includes('not available'))) {
+      return 'Florence-2 is not available. Start the backend model service and retry.';
     }
+    if (err.includes('bigearthnet') && err.includes('not available')) {
+      return 'BigEarthNet model is not available. Ensure model weights are accessible and retry.';
+    }
+    if (err.includes('econnrefused') || err.includes('failed to fetch') || err.includes('network error')) {
+      return 'Backend service unavailable. Please ensure the SatQuery AI backend server is running at http://localhost:8000.';
+    }
+    if (err.includes('timeout') || err.includes('timed out')) {
+      return 'Analysis timeout: CPU inference took longer than configured limit. Try a smaller raster region or check CPU utilization.';
+    }
+    if (err.includes('invalid raster') || err.includes('unsupported raster') || err.includes('cannot be verified')) {
+      return 'Invalid satellite raster. Please upload a valid GeoTIFF, TIFF, PNG, or JPEG satellite image.';
+    }
+    if (err.includes('both past and present') || err.includes('missing t1') || err.includes('missing image')) {
+      return 'Missing required image. Please ensure all required image slots are populated before analyzing.';
+    }
+    if (err.includes('modality mismatch') || err.includes('cannot fuse')) {
+      return 'Incompatible modal pair. Optical + SAR analysis requires one multispectral optical image and one microwave SAR image.';
+    }
+    if (err.includes('geographic extent') || err.includes('not compatible')) {
+      return 'Incompatible geographic coverage. Temporal comparison requires imagery covering the same geographic extent.';
+    }
+    // Clean any technical stack trace or Python internal noise
+    const cleanMsg = rawError.split('\n')[0].replace(/^Error:\s*/i, '');
+    return cleanMsg || 'Analysis could not be completed. Please check your imagery inputs and retry.';
+  };
+
+  // Safe Demo Reset (Requirement 14: Clears uploaded files, current result, overlays, query, validation state, report state; does not delete history)
+  const handleResetAnalysis = () => {
+    setSingleFile(null);
+    setPastFile(null);
+    setPresentFile(null);
+    setOpticalFile(null);
+    setSarFile(null);
+    setSlotValidation({
+      single: { status: 'idle' },
+      past: { status: 'idle' },
+      present: { status: 'idle' },
+      optical: { status: 'idle' },
+      sar: { status: 'idle' },
+    });
+    setSingleQuery('Describe this area.');
+    setBiTemporalQuery('What changed between these two dates and where did the change occur?');
+    setOpticalSarQuery('Use the optical and SAR images together to identify built-up and water-covered regions.');
     setCurrentResult(null);
     setValidationError(null);
+    setFocusedEvidenceId(null);
     setAnalysisFailed(false);
+    setIsAnalyzing(false);
+    setAnalysisStage('Validating inputs...');
   };
+
+  const clearCurrentSession = handleResetAnalysis;
 
   // Perform Analysis
   const handleExecuteAnalysis = async () => {
@@ -624,6 +641,7 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
     setIsAnalyzing(true);
     setAnalysisFailed(false);
     setValidationError(null);
+    setAnalysisStage('Running vision-language analysis...');
 
     try {
       const activeQuery =
@@ -649,9 +667,13 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
           optical: opticalFile,
           sar: sarFile,
         },
-        enableDemoSimulation: true,
+        enableDemoSimulation: false,
+        onProgress: (_step, title) => {
+          setAnalysisStage(title);
+        },
       });
 
+      setAnalysisStage('Preparing result...');
       setCurrentResult(result);
       setIsAnalyzing(false);
 
@@ -669,7 +691,7 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
               : singleFile?.name || 'Satellite Image',
           status: 'Completed',
           confidence: result.confidence,
-          isSimulation: true,
+          isSimulation: Boolean(result.isSimulation),
           result,
         };
         onAnalysisComplete(historyEntry);
@@ -680,70 +702,180 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
         const resEl = document.getElementById('analysis-result-section') || document.getElementById('preview-images-section');
         resEl?.scrollIntoView({ behavior: 'smooth' });
       }, 150);
-    } catch {
+    } catch (err: any) {
       setIsAnalyzing(false);
       setAnalysisFailed(true);
+      const friendlyErr = getJudgeFriendlyErrorMessage(err?.message || 'Analysis failed');
+      setValidationError(friendlyErr);
     }
   };
 
   // Derive past and present images for viewer
   const pastImgSrc =
     mode === 'bi-temporal'
-      ? pastFile?.previewUrl || DEMO_PRESETS.biTemporal.imageA.previewUrl
+      ? pastFile?.previewUrl || ''
       : mode === 'optical-sar'
-      ? opticalFile?.previewUrl || DEMO_PRESETS.opticalSar.optical.previewUrl
-      : singleFile?.previewUrl || DEMO_PRESETS.single.metadata.previewUrl;
+      ? opticalFile?.previewUrl || ''
+      : singleFile?.previewUrl || '';
 
   const presentImgSrc =
     mode === 'bi-temporal'
-      ? presentFile?.previewUrl || DEMO_PRESETS.biTemporal.imageB.previewUrl
+      ? presentFile?.previewUrl || ''
       : mode === 'optical-sar'
-      ? sarFile?.previewUrl || DEMO_PRESETS.opticalSar.sar.previewUrl
-      : singleFile?.previewUrl || DEMO_PRESETS.single.metadata.previewUrl;
+      ? sarFile?.previewUrl || ''
+      : singleFile?.previewUrl || '';
+
+  // 6-Stage Demo Workflow State (Requirement 3: UPLOAD -> VALIDATE -> ASK -> ANALYZE -> EVIDENCE -> REPORT)
+  const hasFiles = mode === 'single' ? !!singleFile : mode === 'bi-temporal' ? (!!pastFile || !!presentFile) : (!!opticalFile || !!sarFile);
+  const isValidated = mode === 'single' ? (singleFile && slotValidation.single?.status === 'valid') : mode === 'bi-temporal' ? canCompareBiTemporal : canFuseOpticalSar;
+
+  let activeStep = 1;
+  if (currentResult) {
+    activeStep = 5; // Step 5 Evidence & Step 6 Report
+  } else if (isAnalyzing) {
+    activeStep = 4; // Step 4 Analyze
+  } else if (isValidated) {
+    activeStep = 3; // Step 3 Ask
+  } else if (hasFiles) {
+    activeStep = 2; // Step 2 Validate
+  } else {
+    activeStep = 1; // Step 1 Upload
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-24">
       {/* 1. HERO HEADER */}
       <section className="text-center pt-4 pb-2 space-y-3">
+        <div className="flex items-center justify-between max-w-4xl mx-auto mb-2">
+          <div className="text-[11px] font-mono text-cyan-400/80 uppercase tracking-widest flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>SIH Problem Statement 26167 Workflow</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetAnalysis}
+            className="px-3 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+            title="Reset current session and start a new analysis"
+          >
+            <RotateCcw className="w-3 h-3 text-cyan-400" />
+            <span>{currentResult ? 'New Analysis' : 'Reset Analysis'}</span>
+          </button>
+        </div>
+
         <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight font-sans">
           SatQuery <span className="text-cyan-400">AI</span>
         </h1>
         <p className="text-lg sm:text-xl font-medium text-cyan-300 font-sans tracking-wide max-w-2xl mx-auto">
-          “Understand your satellite imagery with AI.”
+          “Ask questions about satellite imagery using natural language.”
         </p>
 
-        {/* Workflow Stepper Bar */}
+        {/* 6-Stage Workflow Stepper Bar (Requirement 3) */}
         <div className="pt-3 max-w-4xl mx-auto">
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono overflow-x-auto gap-1">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
-              !currentResult ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60' : 'bg-slate-900 text-slate-400 border border-slate-800'
-            }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span>1. ADD IMAGES</span>
+            {/* STEP 1: Upload */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                activeStep === 1
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                  : activeStep > 1
+                  ? 'bg-slate-900/80 text-emerald-400 border border-slate-800'
+                  : 'text-slate-500'
+              }`}
+            >
+              {activeStep > 1 ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              )}
+              <span>1. UPLOAD</span>
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
-              (singleFile || pastFile || opticalFile) && !currentResult ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-700/40' : 'text-slate-400'
-            }`}>
-              <span>2. PREVIEW</span>
+
+            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+
+            {/* STEP 2: Validate */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                activeStep === 2
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                  : activeStep > 2
+                  ? 'bg-slate-900/80 text-emerald-400 border border-slate-800'
+                  : 'text-slate-500'
+              }`}
+            >
+              {activeStep > 2 ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : activeStep === 2 ? (
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              ) : null}
+              <span>2. VALIDATE</span>
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
-              isAnalyzing ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 animate-pulse' : 'text-slate-400'
-            }`}>
-              <span>3. {mode === 'bi-temporal' ? 'CHANGE ANALYSIS' : 'ANALYZE'}</span>
+
+            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+
+            {/* STEP 3: Ask */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                activeStep === 3
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                  : activeStep > 3
+                  ? 'bg-slate-900/80 text-emerald-400 border border-slate-800'
+                  : 'text-slate-500'
+              }`}
+            >
+              {activeStep > 3 ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : activeStep === 3 ? (
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              ) : null}
+              <span>3. ASK</span>
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
-              currentResult ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60' : 'text-slate-400'
-            }`}>
-              <span>4. RESULT</span>
+
+            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+
+            {/* STEP 4: Analyze */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                activeStep === 4
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 animate-pulse shadow-sm'
+                  : activeStep > 4
+                  ? 'bg-slate-900/80 text-emerald-400 border border-slate-800'
+                  : 'text-slate-500'
+              }`}
+            >
+              {activeStep > 4 ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : activeStep === 4 ? (
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              ) : null}
+              <span>4. ANALYZE</span>
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
-              currentResult ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60' : 'text-slate-400'
-            }`}>
-              <span>5. REPORT</span>
+
+            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+
+            {/* STEP 5: Evidence */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                currentResult
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                  : 'text-slate-500'
+              }`}
+            >
+              {currentResult && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
+              <span>5. EVIDENCE</span>
+            </div>
+
+            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+
+            {/* STEP 6: Report */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 transition ${
+                currentResult
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60 shadow-sm'
+                  : 'text-slate-500'
+              }`}
+            >
+              {currentResult && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
+              <span>6. REPORT</span>
             </div>
           </div>
         </div>
@@ -831,92 +963,107 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
           </div>
         </div>
 
-        {/* Mode Selector Tabs */}
+        {/* Mode Selector Tabs (Requirement 4: Explicit, honest capabilities) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Single Image Mode */}
           <button
             type="button"
             onClick={() => {
               setMode('single');
               setValidationError(null);
               setFocusedEvidenceId(null);
-              if (currentResult.mode !== 'single') {
+              if (currentResult?.mode !== 'single') {
                 const singlePreset = SAMPLE_ANALYSIS_PRESETS['Describe the land-cover and major objects visible in this image.'];
                 if (singlePreset) setCurrentResult(singlePreset);
               }
             }}
-            className={`p-4 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
+            className={`p-4 rounded-xl border text-left transition flex items-start justify-between cursor-pointer ${
               mode === 'single'
                 ? 'bg-cyan-950/50 border-cyan-400 text-cyan-200 ring-1 ring-cyan-400/40'
                 : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/40'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Satellite className={`w-4 h-4 ${mode === 'single' ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <div className="flex items-start gap-3">
+              <Satellite className={`w-4 h-4 mt-0.5 shrink-0 ${mode === 'single' ? 'text-cyan-400' : 'text-slate-400'}`} />
               <div>
-                <div className="text-sm font-semibold">Single image</div>
-                <div className="text-[11px] text-slate-400">1 image analysis & Q&A</div>
+                <div className="text-sm font-semibold">Single Image</div>
+                <div className="text-[11px] text-slate-400 mt-1 space-y-0.5 font-sans leading-tight">
+                  <div>• Scene description & VQA</div>
+                  <div>• Text-guided grounding</div>
+                  <div>• Land-cover analysis</div>
+                </div>
               </div>
             </div>
             {mode === 'single' && (
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0" />
             )}
           </button>
 
+          {/* Past & Present Mode */}
           <button
             type="button"
             onClick={() => {
               setMode('bi-temporal');
               setValidationError(null);
               setFocusedEvidenceId(null);
-              if (currentResult.mode !== 'bi-temporal') {
+              if (currentResult?.mode !== 'bi-temporal') {
                 const biTempPreset = SAMPLE_ANALYSIS_PRESETS['What changed between these two dates and where did the change occur?'];
                 if (biTempPreset) setCurrentResult(biTempPreset);
               }
             }}
-            className={`p-4 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
+            className={`p-4 rounded-xl border text-left transition flex items-start justify-between cursor-pointer ${
               mode === 'bi-temporal'
                 ? 'bg-cyan-950/50 border-cyan-400 text-cyan-200 ring-1 ring-cyan-400/40'
                 : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/40'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Clock className={`w-4 h-4 ${mode === 'bi-temporal' ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <div className="flex items-start gap-3">
+              <Clock className={`w-4 h-4 mt-0.5 shrink-0 ${mode === 'bi-temporal' ? 'text-cyan-400' : 'text-slate-400'}`} />
               <div>
                 <div className="text-sm font-semibold">Past & Present</div>
-                <div className="text-[11px] text-slate-400">Side-by-side change detection</div>
+                <div className="text-[11px] text-slate-400 mt-1 space-y-0.5 font-sans leading-tight">
+                  <div>• Temporal comparison</div>
+                  <div>• Candidate change detection</div>
+                  <div>• Spatial change evidence</div>
+                </div>
               </div>
             </div>
             {mode === 'bi-temporal' && (
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0" />
             )}
           </button>
 
+          {/* Optical + SAR Mode */}
           <button
             type="button"
             onClick={() => {
               setMode('optical-sar');
               setValidationError(null);
               setFocusedEvidenceId(null);
-              if (currentResult.mode !== 'optical-sar') {
+              if (currentResult?.mode !== 'optical-sar') {
                 const optSarPreset = SAMPLE_ANALYSIS_PRESETS['Use the optical and SAR images together to identify built-up and water-covered regions.'];
                 if (optSarPreset) setCurrentResult(optSarPreset);
               }
             }}
-            className={`p-4 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
+            className={`p-4 rounded-xl border text-left transition flex items-start justify-between cursor-pointer ${
               mode === 'optical-sar'
                 ? 'bg-cyan-950/50 border-cyan-400 text-cyan-200 ring-1 ring-cyan-400/40'
                 : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/40'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Layers className={`w-4 h-4 ${mode === 'optical-sar' ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <div className="flex items-start gap-3">
+              <Layers className={`w-4 h-4 mt-0.5 shrink-0 ${mode === 'optical-sar' ? 'text-cyan-400' : 'text-slate-400'}`} />
               <div>
                 <div className="text-sm font-semibold">Optical + SAR</div>
-                <div className="text-[11px] text-slate-400">Multispectral & radar cross-modal</div>
+                <div className="text-[11px] text-slate-400 mt-1 space-y-0.5 font-sans leading-tight">
+                  <div>• Cross-modal analysis</div>
+                  <div>• Optical + SAR backscatter evidence</div>
+                  <div>• Classical evidence corroboration</div>
+                </div>
               </div>
             </div>
             {mode === 'optical-sar' && (
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0" />
             )}
           </button>
         </div>
@@ -1812,23 +1959,18 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
             <div className="flex flex-wrap gap-2">
               {(mode === 'single'
                 ? [
-                    'Describe this area.',
-                    'What land features are visible?',
-                    'Where are the water bodies?',
-                    'Are there buildings or built-up areas?',
-                    'What vegetation is visible?',
+                    'What does this image show?',
+                    'Where are the buildings?',
+                    'Where is the vegetation?',
+                    'What land-cover types are present?',
                   ]
                 : mode === 'bi-temporal'
                 ? [
-                    'What changed between these two dates and where did the change occur?',
-                    'Highlight areas of urban expansion and new construction.',
-                    'Detect loss of vegetation and green canopy cover.',
-                    'Did the lake or water reservoir shrink?',
+                    'What changed between these two images?',
+                    'Where are the major changed regions?',
                   ]
                 : [
-                    'Use the optical and SAR images together to identify built-up and water-covered regions.',
-                    'Penetrate cloud cover and verify ground infrastructure.',
-                    'Compare optical visual color with microwave radar backscatter.',
+                    'What features are supported by both optical and SAR evidence?',
                   ]
               ).map((exampleQ) => {
                 const activeVal =
@@ -1925,9 +2067,9 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
                         </span>
-                        Deep Remote-Sensing Analysis in Progress...
+                        {analysisStage}
                       </span>
-                      <span className="text-slate-400">Please wait</span>
+                      <span className="text-slate-400">Processing Pipeline</span>
                     </div>
                     <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
                       <div className="bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-300 h-full rounded-full animate-pulse w-4/5 transition-all duration-500" />
@@ -1946,7 +2088,7 @@ export const SimpleWorkflowView: React.FC<SimpleWorkflowViewProps> = ({
                       <span>Analysis Failed</span>
                     </div>
                     <p className="text-sm text-rose-100 max-w-md mx-auto leading-relaxed">
-                      We couldn't analyze these images. Please verify your imagery and try again.
+                      {validationError || "We couldn't analyze these images. Please verify your imagery and try again."}
                     </p>
                     <div className="pt-2 flex items-center justify-center">
                       <button

@@ -1,22 +1,15 @@
 import { AnalysisResult } from '../types';
+import { generateReport } from '../services/api';
 
 /**
  * Generates and downloads a clean, professional intelligence report for SatQuery AI.
- * Contains only user-facing, factual information:
- * - Images used
- * - Analysis type
- * - User's question
- * - Main findings
- * - Change findings if applicable
- * - Visual evidence if available
- * - Analysis date
- *
- * Excludes all internal model names, developer logs, and fake confidence metrics.
+ * Uses real backend report generation when available, with client-side fallback.
+ * Strictly non-fabricated: zero hardcoded coordinates, zero fake metrics.
  */
-export function downloadAnalysisReport(
+export async function downloadAnalysisReport(
   result: AnalysisResult,
   format: 'text' | 'json' | 'geojson' = 'text'
-): void {
+): Promise<void> {
   const timestamp = result.timestamp || new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
   const cleanDate = timestamp.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 19);
 
@@ -29,34 +22,59 @@ export function downloadAnalysisReport(
     ? 'Optical + SAR Cross-Sensor Analysis'
     : 'Single Image Analysis';
 
-  const imageFiles = result.inputInformation ||
-    (isBiTemporal
-      ? 'Past: BENGALURU_NORTH_T1_2022.tif | Present: BENGALURU_NORTH_T2_2024.tif'
-      : isOpticalSar
-      ? 'Optical: MANGALORE_OPTICAL_2023.tif | SAR: MANGALORE_SAR_VV_VH_2023.tif'
-      : 'MUMBAI_HARBOR_MSI_20240315.tif');
+  const imageFiles = result.inputInformation || 'Satellite Observation Raster';
 
-  // 1. GeoJSON OGC standard spatial export
+  // 1. GeoJSON format
   if (format === 'geojson') {
-    const features: any[] = [];
-    const bounds = result.geospatialMetadata?.bounds || result.imageryMetadata?.bounds;
+    const isGeoAvailable = result.geospatialEvidence?.status === 'available';
+    const crsName = isGeoAvailable
+      ? result.geospatialEvidence?.crs || 'urn:ogc:def:crs:OGC:1.3:CRS84'
+      : 'Local Pixel Coordinates (Unprojected)';
 
+    const features: any[] = [];
     if (result.boundingBoxes && result.boundingBoxes.length > 0) {
       result.boundingBoxes.forEach((b) => {
         let coords: [number, number][][] = [];
-        if (bounds) {
-          const west = bounds.west + (b.x / 100) * (bounds.east - bounds.west);
-          const east = bounds.west + ((b.x + b.width) / 100) * (bounds.east - bounds.west);
-          const north = bounds.north - (b.y / 100) * (bounds.north - bounds.south);
-          const south = bounds.north - ((b.y + b.height) / 100) * (bounds.north - bounds.south);
-          coords = [[
-            [west, north],
-            [east, north],
-            [east, south],
-            [west, south],
-            [west, north],
-          ]];
+        if (isGeoAvailable) {
+          if (b.geographicBbox) {
+            const g = b.geographicBbox;
+            coords = [
+              [
+                [g.min_lon, g.max_lat],
+                [g.max_lon, g.max_lat],
+                [g.max_lon, g.min_lat],
+                [g.min_lon, g.min_lat],
+                [g.min_lon, g.max_lat],
+              ],
+            ];
+          } else if (result.geospatialEvidence?.bounds) {
+            const bounds = result.geospatialEvidence.bounds;
+            const west = bounds.west + (b.x / 100) * (bounds.east - bounds.west);
+            const east = bounds.west + ((b.x + b.width) / 100) * (bounds.east - bounds.west);
+            const north = bounds.north - (b.y / 100) * (bounds.north - bounds.south);
+            const south = bounds.north - ((b.y + b.height) / 100) * (bounds.north - bounds.south);
+            coords = [
+              [
+                [west, north],
+                [east, north],
+                [east, south],
+                [west, south],
+                [west, north],
+              ],
+            ];
+          }
+        } else {
+          coords = [
+            [
+              [b.x, b.y],
+              [b.x + b.width, b.y],
+              [b.x + b.width, b.y + b.height],
+              [b.x, b.y + b.height],
+              [b.x, b.y],
+            ],
+          ];
         }
+
         features.push({
           type: 'Feature',
           id: b.id,
@@ -65,24 +83,7 @@ export function downloadAnalysisReport(
             label: b.label,
             description: b.description,
             pixelBounds: { x: b.x, y: b.y, width: b.width, height: b.height },
-            areaHectares: b.areaHectares || 'N/A',
             query: result.query,
-          },
-        });
-      });
-    }
-
-    if (result.changedRegions && result.changedRegions.length > 0) {
-      result.changedRegions.forEach((cr) => {
-        features.push({
-          type: 'Feature',
-          id: cr.id,
-          properties: {
-            label: cr.label,
-            category: cr.category,
-            direction: cr.direction,
-            areaKm2: cr.areaKm2,
-            coordinates: cr.coordinates || 'Location verified in raster space',
           },
         });
       });
@@ -90,6 +91,10 @@ export function downloadAnalysisReport(
 
     const geoJsonDoc = {
       type: 'FeatureCollection',
+      crs: {
+        type: 'name',
+        properties: { name: crsName },
+      },
       metadata: {
         title: 'SatQuery AI Spatial Evidence Report',
         analysisType: analysisTypeName,
@@ -97,6 +102,7 @@ export function downloadAnalysisReport(
         answer: result.answer,
         analysisDate: timestamp,
         imagery: imageFiles,
+        geospatialStatus: result.geospatialEvidence?.status || 'unavailable',
       },
       features,
     };
@@ -119,46 +125,28 @@ export function downloadAnalysisReport(
       reportTitle: 'SatQuery AI - Satellite Imagery Analysis Report',
       analysisDate: timestamp,
       analysisType: analysisTypeName,
+      selectedModel: result.selectedModel,
       userQuestion: result.query,
       imagesUsed: {
         fileNames: imageFiles,
-        dimensions: result.imageryMetadata?.dimensions || '2048 × 2048 px',
-        spatialResolution: result.imageryMetadata?.resolution || '0.5m - 0.8m Ground Sampling Distance',
-        coordinateSystem: result.geospatialMetadata?.crs || result.temporalMetadata?.crs || 'EPSG:32643 (UTM Zone 43N)',
-        coordinates: result.imageryMetadata?.coordinates || '18.9585° N, 72.8485° E',
+        dimensions: result.imageryMetadata?.dimensions || 'Unspecified dimensions',
+        spatialResolution: result.imageryMetadata?.resolution || 'Unspecified GSD',
+        coordinateSystem: result.geospatialEvidence?.crs || result.imageryMetadata?.crs || 'Local Pixel Space',
       },
       mainFindings: {
-        summary: result.answer,
-        sceneInsight: result.whyThisAnswer || 'Land cover and structural boundaries validated from raster attributes.',
+        answer: result.answer,
+        directEvidence: result.evidenceHierarchy?.direct_evidence || result.evidence || [],
+        supportingEvidence: result.evidenceHierarchy?.supporting_evidence || [],
+        limitations: result.evidenceHierarchy?.limitations || result.geospatialEvidence?.limitations || [],
+        disagreements: result.evidenceHierarchy?.disagreements || [],
       },
-      changeFindings: isBiTemporal ? {
-        whatChanged: result.answer,
-        where: result.imageryMetadata?.coordinates || 'Eastern Urban Development Sector (13.0495° N, 77.6135° E)',
-        changeSummary: {
-          increased: '+1.84 km² (New commercial built-up infrastructure and arterial transit links)',
-          decreased: '-1.70 km² (Natural vegetation and agricultural acreage converted to construction)',
-          newlyAppeared: '48 newly erected logistics bay structures and paved transit corridor',
-          disappeared: 'Scrubland, seasonal foliage, and temporary staging areas',
-          noSignificantChange: 'Protected lake reservoir basin (±0.0% shoreline variance, preserved)',
-        },
-      } : null,
+      geospatialEvidence: result.geospatialEvidence || { status: 'unavailable' },
+      crossModalEvidence: result.crossModalEvidence || null,
       visualEvidence: {
-        detectedFeaturesCount: (result.boundingBoxes?.length || 0) + (result.polygons?.length || 0) + (result.changedRegions?.length || 0),
-        items: [
-          ...(result.boundingBoxes || []).map((b) => ({
-            label: b.label,
-            description: b.description,
-            bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
-          })),
-          ...(result.changedRegions || []).map((cr) => ({
-            label: cr.label,
-            changeType: cr.direction,
-            areaKm2: cr.areaKm2,
-            coordinates: cr.coordinates || 'Identified in spatial change raster',
-          })),
-        ],
-        evidencePoints: result.evidence || [],
+        detectedFeaturesCount: result.boundingBoxes?.length || 0,
+        items: result.boundingBoxes || [],
       },
+      executionTrace: result.executionSteps || [],
     };
 
     const blob = new Blob([JSON.stringify(jsonDoc, null, 2)], { type: 'application/json' });
@@ -173,94 +161,107 @@ export function downloadAnalysisReport(
     return;
   }
 
-  // 3. Structured Text Report
-  const textContent = `================================================================================
-                    SATQUERY AI - ANALYSIS REPORT
-               "Understand your satellite imagery with AI"
-================================================================================
-ANALYSIS DATE: ${timestamp}
-ANALYSIS TYPE: ${analysisTypeName}
+  // 3. Text / Markdown Report: Try backend report generator first
+  try {
+    const backendReport = await generateReport(result);
+    if (backendReport?.markdown) {
+      const blob = new Blob([backendReport.markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `SATQUERY_REPORT_${cleanDate}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+  } catch {
+    // Fall back to client-side markdown generation
+  }
 
-================================================================================
-1. IMAGES USED
-================================================================================
-Files:
-  ${imageFiles}
+  // Client-side structured report
+  const geoStatus = result.geospatialEvidence?.status === 'available'
+    ? `VERIFIED (${result.geospatialEvidence.crs})`
+    : 'UNAVAILABLE (Pixel Space)';
 
-Spatial Resolution:
-  ${result.imageryMetadata?.resolution || '0.5m - 0.8m Ground Sampling Distance'}
+  const lines = [
+    '================================================================================',
+    '                    SATQUERY AI - MISSION INTELLIGENCE REPORT',
+    '               "Understand your satellite imagery with AI"',
+    '================================================================================',
+    `ANALYSIS DATE: ${timestamp}`,
+    `ANALYSIS TYPE: ${analysisTypeName}`,
+    `SPECIALIST:    ${result.selectedModel || 'SatQuery AI Multi-Specialist'}`,
+    `GEOSPATIAL:    ${geoStatus}`,
+    '',
+    '================================================================================',
+    '1. INPUT OBSERVATIONS',
+    '================================================================================',
+    `Files:              ${imageFiles}`,
+    `Dimensions:         ${result.imageryMetadata?.dimensions || 'Unspecified'}`,
+    `Spatial Resolution: ${result.imageryMetadata?.resolution || 'Unspecified GSD'}`,
+    `Sensor / Modality:  ${result.imageryMetadata?.modality || 'Optical'} (${result.imageryMetadata?.sensor || 'Remote Sensing'})`,
+    `CRS:                ${result.geospatialEvidence?.crs || result.imageryMetadata?.crs || 'Local Pixel Space (Unprojected)'}`,
+    '',
+    '================================================================================',
+    "2. USER'S QUESTION",
+    '================================================================================',
+    `"${result.query}"`,
+    '',
+    '================================================================================',
+    '3. GROUNDED ANSWER',
+    '================================================================================',
+    result.answer,
+    '',
+    'Primary Evidence:',
+  ];
 
-Raster Dimensions:
-  ${result.imageryMetadata?.dimensions || '2048 × 2048 px'}
+  const direct = result.evidenceHierarchy?.direct_evidence || result.evidence || [];
+  if (direct.length > 0) {
+    direct.forEach((e, idx) => lines.push(`  [${idx + 1}] ${e}`));
+  } else {
+    lines.push('  • Evidence synthesized directly in answer.');
+  }
 
-Coordinate Reference System:
-  ${result.geospatialMetadata?.crs || result.temporalMetadata?.crs || 'EPSG:32643 (WGS 84 / UTM zone 43N)'}
+  const supp = result.evidenceHierarchy?.supporting_evidence || [];
+  if (supp.length > 0) {
+    lines.push('', 'Supporting Evidence:');
+    supp.forEach((s) => lines.push(`  • ${s}`));
+  }
 
-Geographic Coordinates:
-  ${result.imageryMetadata?.coordinates || '18.9585° N, 72.8485° E (or standard spatial raster)'}
+  const dis = result.evidenceHierarchy?.disagreements || [];
+  if (dis.length > 0) {
+    lines.push('', 'Specialist Disagreements:');
+    dis.forEach((d) => lines.push(`  ⚠ ${d}`));
+  }
 
-================================================================================
-2. USER'S QUESTION
-================================================================================
-"${result.query}"
+  const lims = result.evidenceHierarchy?.limitations || result.geospatialEvidence?.limitations || [];
+  if (lims.length > 0) {
+    lines.push('', 'Limitations & Uncertainty:');
+    lims.forEach((l) => lines.push(`  - ${l}`));
+  }
 
-================================================================================
-3. MAIN FINDINGS
-================================================================================
-${result.answer}
+  if (result.boundingBoxes && result.boundingBoxes.length > 0) {
+    lines.push(
+      '',
+      '================================================================================',
+      '4. SPATIAL EVIDENCE REGIONS',
+      '================================================================================'
+    );
+    result.boundingBoxes.forEach((b) => {
+      lines.push(`  • ${b.label}: [X:${b.x.toFixed(1)}%, Y:${b.y.toFixed(1)}%, W:${b.width.toFixed(1)}%, H:${b.height.toFixed(1)}%] - ${b.description}`);
+    });
+  }
 
-${result.whyThisAnswer ? `Detailed Scene Context:\n${result.whyThisAnswer}\n` : ''}
-Key Observations:
-${(result.evidence && result.evidence.length > 0)
-  ? result.evidence.map((e, idx) => `  [${idx + 1}] ${e}`).join('\n')
-  : '  • General land-cover classification and object bounds verified.'}
+  lines.push(
+    '',
+    '================================================================================',
+    'END OF SATQUERY AI REPORT',
+    '================================================================================'
+  );
 
-${isBiTemporal ? `================================================================================
-4. CHANGE FINDINGS
-================================================================================
-What Changed:
-  Major urban expansion and infrastructure development identified between dates.
-  Built-up structures and logistics complexes replaced prior uncultivated land.
-
-Where the Change Occurred:
-  ${result.imageryMetadata?.coordinates || 'Eastern Urban Sector (13.0495° N, 77.6135° E)'}
-
-Change Type Breakdown:
-  • Increased:
-    Built-up urban infrastructure & impervious paved ground (+1.84 km² / +32.4%)
-  • Decreased:
-    Natural vegetation canopy and open agricultural parcels (-1.70 km² / -18.2%)
-  • Newly Appeared:
-    48 new logistics bay complexes, warehouse foundations, and arterial road links
-  • Disappeared:
-    Unmanaged scrubland and seasonal foliage
-  • No Significant Change:
-    Primary water reservoir basin and municipal lake perimeter (stable shoreline)
-
-Overall Summary:
-  Between the past and present acquisitions, significant suburban expansion took place.
-  48 new industrial structures and paved roadways emerged in the eastern sector,
-  while water resources remained safeguarded within statutory buffer boundaries.
-` : ''}
-
-================================================================================
-${isBiTemporal ? '5' : '4'}. VISUAL EVIDENCE ON IMAGES
-================================================================================
-${(result.boundingBoxes && result.boundingBoxes.length > 0)
-  ? `Detected Spatial Entities:\n` +
-    result.boundingBoxes.map((b) => `  • ${b.label}: [X:${b.x}%, Y:${b.y}%, W:${b.width}%, H:${b.height}%] - ${b.description}`).join('\n')
-  : 'No spatial bounding box annotations were produced for this specific query.'}
-
-${(result.changedRegions && result.changedRegions.length > 0)
-  ? `\nChange Map Regions:\n` +
-    result.changedRegions.map((cr) => `  • ${cr.label} [${cr.direction}]: ${cr.areaKm2} km² (Location: ${cr.coordinates || 'Spatial raster grid'})`).join('\n')
-  : ''}
-
-================================================================================
-END OF SATQUERY AI REPORT
-================================================================================
-`;
-
+  const textContent = lines.join('\n') + '\n';
   const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

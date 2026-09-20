@@ -46,7 +46,7 @@ class TextGuidedGroundingModel(BaseRemoteSensingModel):
             evidence = [
                 "Spatial grounding attention score peaked at 0.974 corresponding to token 'water body'.",
                 "Bounding boundary verified against NDWI segmentation threshold (>0.40).",
-                "Coordinates referenced to UTM Zone 43N (EPSG:32643)."
+                "Spatial coordinates referenced to pixel grid (local coordinates)."
             ]
         else:
             target = "Referenced Spatial Object"

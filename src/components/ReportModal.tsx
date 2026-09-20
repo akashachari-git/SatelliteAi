@@ -26,39 +26,82 @@ export const ReportModal: React.FC<ReportModalProps> = ({ result, onClose }) => 
 
   if (!result) return null;
 
-  // Synthesize standard GeoJSON FeatureCollection from bounding boxes
+  // Synthesize standard GeoJSON FeatureCollection from real bounding boxes and geospatial evidence
+  const isGeoAvailable = result.geospatialEvidence?.status === 'available';
+  const crsName = isGeoAvailable
+    ? result.geospatialEvidence?.crs || 'urn:ogc:def:crs:OGC:1.3:CRS84'
+    : 'Local Pixel Coordinates (Unprojected)';
+
   const geojsonDump = JSON.stringify(
     {
       type: 'FeatureCollection',
       crs: {
         type: 'name',
-        properties: { name: 'urn:ogc:def:crs:EPSG::32643' },
+        properties: { name: crsName },
       },
-      features: (result.boundingBoxes || []).map((b) => ({
-        type: 'Feature',
-        id: b.id,
-        properties: {
-          label: b.label,
-          confidence: b.confidence,
-          description: b.description,
-          task: result.taskType,
-          model: result.selectedModel,
-          mode: result.mode,
-          isSimulation: result.isSimulation ?? true,
-        },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
+      geospatialStatus: result.geospatialEvidence?.status || 'unavailable',
+      features: (result.boundingBoxes || []).map((b) => {
+        let coords: [number, number][][] = [];
+
+        if (isGeoAvailable) {
+          if (b.geographicBbox) {
+            const g = b.geographicBbox;
+            coords = [
+              [
+                [g.min_lon, g.max_lat],
+                [g.max_lon, g.max_lat],
+                [g.max_lon, g.min_lat],
+                [g.min_lon, g.min_lat],
+                [g.min_lon, g.max_lat],
+              ],
+            ];
+          } else if (result.geospatialEvidence?.bounds) {
+            const bounds = result.geospatialEvidence.bounds;
+            const west = bounds.west + (b.x / 100) * (bounds.east - bounds.west);
+            const east = bounds.west + ((b.x + b.width) / 100) * (bounds.east - bounds.west);
+            const north = bounds.north - (b.y / 100) * (bounds.north - bounds.south);
+            const south = bounds.north - ((b.y + b.height) / 100) * (bounds.north - bounds.south);
+            coords = [
+              [
+                [west, north],
+                [east, north],
+                [east, south],
+                [west, south],
+                [west, north],
+              ],
+            ];
+          }
+        } else {
+          // Unprojected pixel coordinate space
+          coords = [
             [
-              [72.82 + (b.x / 100) * 0.05, 18.97 + (b.y / 100) * 0.05],
-              [72.82 + ((b.x + b.width) / 100) * 0.05, 18.97 + (b.y / 100) * 0.05],
-              [72.82 + ((b.x + b.width) / 100) * 0.05, 18.97 + ((b.y + b.height) / 100) * 0.05],
-              [72.82 + (b.x / 100) * 0.05, 18.97 + ((b.y + b.height) / 100) * 0.05],
-              [72.82 + (b.x / 100) * 0.05, 18.97 + (b.y / 100) * 0.05],
+              [b.x, b.y],
+              [b.x + b.width, b.y],
+              [b.x + b.width, b.y + b.height],
+              [b.x, b.y + b.height],
+              [b.x, b.y],
             ],
-          ],
-        },
-      })),
+          ];
+        }
+
+        return {
+          type: 'Feature',
+          id: b.id,
+          properties: {
+            label: b.label,
+            confidence: b.confidence ?? null,
+            description: b.description,
+            task: result.taskType,
+            model: result.selectedModel,
+            mode: result.mode,
+            isSimulation: result.isSimulation ?? false,
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: coords,
+          },
+        };
+      }),
     },
     null,
     2

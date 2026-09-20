@@ -8,6 +8,9 @@ import {
   Eye,
   EyeOff,
   Image as ImageIcon,
+  Compass,
+  MapPin,
+  Crosshair,
 } from 'lucide-react';
 import { BoundingBox, SpatialPolygon, SpatialPoint } from '../types';
 
@@ -20,6 +23,8 @@ interface SingleImageViewerProps {
   points?: SpatialPoint[];
   focusedEvidenceId?: string | null;
   onSelectEvidence?: (id: string) => void;
+  geospatialMetadata?: any;
+  geospatialEvidence?: any;
 }
 
 export const SingleImageViewer: React.FC<SingleImageViewerProps> = ({
@@ -29,6 +34,8 @@ export const SingleImageViewer: React.FC<SingleImageViewerProps> = ({
   points = [],
   focusedEvidenceId,
   onSelectEvidence,
+  geospatialMetadata,
+  geospatialEvidence,
 }) => {
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -36,6 +43,14 @@ export const SingleImageViewer: React.FC<SingleImageViewerProps> = ({
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showOverlay, setShowOverlay] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [cursorHud, setCursorHud] = useState<{
+    pixelX: number;
+    pixelY: number;
+    lat: number | null;
+    lon: number | null;
+    feature: string;
+    evidenceSource: string;
+  } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerWrapperRef = useRef<HTMLDivElement>(null);
@@ -52,6 +67,61 @@ export const SingleImageViewer: React.FC<SingleImageViewerProps> = ({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
     });
+  };
+
+  const animFrameRef = useRef<number | null>(null);
+
+  const handleImageCursorMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    const currentTarget = e.currentTarget;
+
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+
+    animFrameRef.current = requestAnimationFrame(() => {
+      const rect = currentTarget.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const xPct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      const yPct = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+      let lat: number | null = null;
+      let lon: number | null = null;
+      const bounds = geospatialEvidence?.bounds || geospatialMetadata?.bounds;
+      const isGeoAvailable = geospatialEvidence?.status === 'available' || geospatialMetadata?.isGeoreferenced;
+
+      if (bounds && isGeoAvailable) {
+        const north = bounds.north ?? bounds.max_lat;
+        const south = bounds.south ?? bounds.min_lat;
+        const east = bounds.east ?? bounds.max_lon;
+        const west = bounds.west ?? bounds.min_lon;
+        if (typeof north === 'number' && typeof south === 'number' && typeof east === 'number' && typeof west === 'number') {
+          lat = north - (yPct / 100) * (north - south);
+          lon = west + (xPct / 100) * (east - west);
+        }
+      }
+
+      const hitBox = boundingBoxes.find(
+        (b) => xPct >= b.x && xPct <= b.x + b.width && yPct >= b.y && yPct <= b.y + b.height
+      );
+
+      setCursorHud({
+        pixelX: Math.round((xPct / 100) * (geospatialMetadata?.width || 1024)),
+        pixelY: Math.round((yPct / 100) * (geospatialMetadata?.height || 1024)),
+        lat,
+        lon,
+        feature: hitBox ? hitBox.label : 'Background / Unclassified',
+        evidenceSource: hitBox ? 'Visual Model Grounding' : 'None',
+      });
+    });
+  };
+
+  const handleImageCursorLeave = () => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+    setCursorHud(null);
   };
 
   const handleMouseUp = () => setIsDragging(false);
@@ -226,81 +296,127 @@ export const SingleImageViewer: React.FC<SingleImageViewerProps> = ({
           className="relative max-w-full max-h-full flex items-center justify-center"
         >
           {/* Main Uploaded Satellite Image */}
-          <img
-            src={imageUrl}
-            alt={imageName}
-            className={`${
-              isFullscreen ? 'max-h-[85vh]' : 'max-h-[440px] sm:max-h-[520px]'
-            } w-auto object-contain pointer-events-none rounded shadow-2xl`}
-            draggable={false}
-          />
+          <div
+            onMouseMove={handleImageCursorMove}
+            onMouseLeave={handleImageCursorLeave}
+            className="relative pointer-events-auto cursor-crosshair"
+          >
+            <img
+              src={imageUrl}
+              alt={imageName}
+              className={`${
+                isFullscreen ? 'max-h-[85vh]' : 'max-h-[440px] sm:max-h-[520px]'
+              } w-auto object-contain rounded shadow-2xl`}
+              draggable={false}
+            />
 
-          {/* Visual Evidence Overlays */}
-          {showOverlay && (
-            <div className="absolute inset-0 pointer-events-none">
-              {/* Bounding Boxes */}
-              {boundingBoxes.map((b) => {
-                const isFocused = focusedEvidenceId === b.id;
-                const boxColor = b.color || '#22d3ee';
-                return (
-                  <div
-                    key={b.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectEvidence?.(b.id);
-                    }}
-                    style={{
-                      left: `${b.x}%`,
-                      top: `${b.y}%`,
-                      width: `${b.width}%`,
-                      height: `${b.height}%`,
-                      borderColor: boxColor,
-                    }}
-                    className={`absolute border-2 pointer-events-auto cursor-pointer transition-all duration-200 ${
-                      isFocused
-                        ? 'border-4 ring-4 ring-cyan-400/40 bg-cyan-500/25 z-30'
-                        : 'hover:bg-cyan-500/15 z-20'
-                    }`}
-                  >
+            {/* Visual Evidence Overlays */}
+            {showOverlay && (
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Bounding Boxes */}
+                {boundingBoxes.map((b) => {
+                  const isFocused = focusedEvidenceId === b.id;
+                  const boxColor = b.color || '#22d3ee';
+                  return (
                     <div
-                      style={{ backgroundColor: boxColor }}
-                      className="absolute top-0 left-0 -translate-y-full px-1.5 py-0.5 text-[10px] font-mono font-bold text-black rounded-t flex items-center gap-1 shadow whitespace-nowrap"
+                      key={b.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectEvidence?.(b.id);
+                      }}
+                      style={{
+                        left: `${b.x}%`,
+                        top: `${b.y}%`,
+                        width: `${b.width}%`,
+                        height: `${b.height}%`,
+                        borderColor: boxColor,
+                      }}
+                      className={`absolute border-2 pointer-events-auto cursor-pointer transition-all duration-200 ${
+                        isFocused
+                          ? 'border-4 ring-4 ring-cyan-400/40 bg-cyan-500/25 z-30'
+                          : 'hover:bg-cyan-500/15 z-20'
+                      }`}
                     >
-                      <span>{b.label}</span>
+                      <div
+                        style={{ backgroundColor: boxColor }}
+                        className="absolute top-0 left-0 -translate-y-full px-1.5 py-0.5 text-[10px] font-mono font-bold text-black rounded-t flex items-center gap-1 shadow whitespace-nowrap"
+                      >
+                        <span>{b.label}</span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {/* Spatial Points */}
-              {points.map((pt) => {
-                const isFocused = focusedEvidenceId === pt.id;
-                const ptX = pt.pixelX ?? 50;
-                const ptY = pt.pixelY ?? 50;
-                return (
-                  <div
-                    key={pt.id}
-                    style={{ left: `${ptX}%`, top: `${ptY}%` }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer z-20 transition-all ${
-                      isFocused ? 'scale-150 z-30' : 'hover:scale-125'
-                    }`}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white shadow" />
+                {/* Spatial Points */}
+                {points.map((pt) => {
+                  const isFocused = focusedEvidenceId === pt.id;
+                  const ptX = pt.pixelX ?? 50;
+                  const ptY = pt.pixelY ?? 50;
+                  return (
+                    <div
+                      key={pt.id}
+                      style={{ left: `${ptX}%`, top: `${ptY}%` }}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer z-20 transition-all ${
+                        isFocused ? 'scale-150 z-30' : 'hover:scale-125'
+                      }`}
+                    >
+                      <div className="relative flex items-center justify-center">
+                        <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white shadow" />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Real-time Cursor HUD */}
+        {cursorHud && (
+          <div className="absolute top-3 left-3 z-30 bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 rounded-xl px-4 py-2 text-xs font-mono shadow-2xl flex flex-wrap items-center gap-3.5 text-slate-200 pointer-events-none">
+            <div className="flex items-center gap-1.5 text-cyan-400">
+              <Crosshair className="w-3.5 h-3.5" />
+              <span className="text-[10px] text-slate-400 uppercase">PIXEL:</span>
+              <span className="font-bold">({cursorHud.pixelX}, {cursorHud.pixelY})</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[10px] text-slate-400 uppercase">LAT:</span>
+              <span className={cursorHud.lat !== null ? "text-emerald-300 font-bold" : "text-amber-400 font-semibold"}>
+                {cursorHud.lat !== null ? `${cursorHud.lat.toFixed(5)}° N` : 'Geolocation unavailable'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[10px] text-slate-400 uppercase">LON:</span>
+              <span className={cursorHud.lon !== null ? "text-emerald-300 font-bold" : "text-amber-400 font-semibold"}>
+                {cursorHud.lon !== null ? `${cursorHud.lon.toFixed(5)}° E` : 'Geolocation unavailable'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-slate-800 pl-2.5">
+              <span className="text-[10px] text-slate-400 uppercase">FEATURE:</span>
+              <span className="text-cyan-300 font-bold">{cursorHud.feature}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-400 uppercase">SOURCE:</span>
+              <span className="text-slate-300">{cursorHud.evidenceSource}</span>
+            </div>
+          </div>
+        )}
 
         {/* Minimal Navigation Hint */}
         <div className="absolute bottom-3 left-3 bg-slate-950/80 backdrop-blur-sm border border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] font-sans text-slate-300 flex items-center gap-2 shadow-lg pointer-events-none">
           <span className="w-2 h-2 rounded-full bg-cyan-400" />
           <span>Click & drag to pan • Scroll to zoom</span>
         </div>
+
+        {/* Spatial Evidence Status Hint */}
+        {boundingBoxes.length === 0 && (
+          <div className="absolute bottom-3 right-3 bg-slate-950/80 backdrop-blur-sm border border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] font-sans text-slate-400 pointer-events-none">
+            No spatial evidence returned for this analysis.
+          </div>
+        )}
       </div>
     </div>
   );

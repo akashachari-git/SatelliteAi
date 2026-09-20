@@ -1,40 +1,39 @@
-# SatQuery AI - GPU-Ready Production Dockerfile
-# Based on NVIDIA CUDA PyTorch container for high-throughput remote sensing inference
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+# SatQuery AI - Production Dockerfile
+# Python 3.10+ container for persistent container/VM deployment
+FROM python:3.10-slim
 
 # Environment Configuration
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8000 \
+    PYTHONPATH=/app
 
-# Install System Geospatial Dependencies (GDAL, PROJ, GEOS)
+# Install system geospatial and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.10 \
-    python3-pip \
-    python3.10-dev \
+    build-essential \
+    curl \
+    git \
     libgdal-dev \
     gdal-bin \
     libgeos-dev \
     libproj-dev \
-    build-essential \
-    curl \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Working Directory
+# Set working directory to /app
 WORKDIR /app
 
-# Copy Requirements and Install Python Dependencies
+# Copy dependency specifications and install Python packages
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -U pip setuptools wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -U pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy Backend Architecture Code
-COPY . /app/backend
+# Copy backend application code and local checkpoints
+# Models and checkpoints reside in /app/backend/models/checkpoints (or /app/models/checkpoints)
+COPY . /app
 
-# Expose Internal Microservice Port
+# Expose internal microservice port
 EXPOSE 8000
 
-# Launch Uvicorn Server with 4 Workers
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Start FastAPI with uvicorn using dynamic $PORT (default 8000)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

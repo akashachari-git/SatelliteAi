@@ -56,6 +56,7 @@ export interface FileMetadata {
   sensor: string;
   previewUrl: string;
   geospatialMetadata?: GeospatialMetadata;
+  fileDataUri?: string;
 }
 
 export interface BoundingBox {
@@ -269,6 +270,16 @@ export interface ChangeMaskData {
   labels?: string[];
 }
 
+export interface DetectedFeatureItem {
+  name: string;
+  status: 'Detected' | 'Not Present in Scene';
+  extent?: string;
+  coverage?: string;
+  description: string;
+  confidence?: number | null;
+  iconName?: string;
+}
+
 export interface AnalysisResult {
   query: string;
   mode: AnalysisMode;
@@ -296,6 +307,7 @@ export interface AnalysisResult {
   crossModalEvidence?: CrossModalEvidence;
   multimodalRegions?: MultimodalRegion[];
   opticalSarCompatibility?: OpticalSarCompatibilityResult;
+  detectedFeatures?: DetectedFeatureItem[];
   executionSteps: ExecutionTraceStep[];
   imageryMetadata: {
     coordinates: string;

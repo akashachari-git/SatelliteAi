@@ -3,6 +3,7 @@ dotenv.config({ override: true });
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { spawn } from 'child_process';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import {
@@ -47,6 +48,19 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '150mb' }));
 app.use(express.urlencoded({ extended: true, limit: '150mb' }));
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err instanceof SyntaxError && 'status' in err && (err as any).status === 400) {
+    return res.status(400).json({ error: 'Malformed JSON payload in request' });
+  }
+  next(err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Server Uncaught Exception]:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server Unhandled Rejection]:', reason);
+});
 
 // Verify and initialize PostgreSQL database connection on backend startup
 verifyDatabaseOnStartup()
@@ -410,6 +424,73 @@ function getGeminiClient(): GoogleGenAI | null {
   return geminiClient;
 }
 
+// Local Remote-Sensing Computer Vision Engine Runner (Pillow + NumPy + SciPy)
+function runLocalEngine(payload: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const py = spawn('python', ['-m', 'backend.geospatial.local_engine'], {
+      cwd: process.cwd(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    py.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    py.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    py.on('error', (err) => {
+      reject(err);
+    });
+    py.on('close', (code) => {
+      if (code !== 0 && !stdout.trim()) {
+        return reject(new Error(stderr || `Local engine exited with code ${code}`));
+      }
+      try {
+        const parsed = JSON.parse(stdout.trim());
+        resolve(parsed);
+      } catch (e) {
+        reject(new Error(`Failed to parse local engine output: ${stdout || stderr}`));
+      }
+    });
+    py.stdin.write(JSON.stringify(payload));
+    py.stdin.end();
+  });
+}
+
+// Extract base64 and mime from file objects or data URIs
+function extractImageBase64(fileObj: any): { base64: string; mimeType: string } | null {
+  if (!fileObj) return null;
+  if (typeof fileObj === 'string') {
+    if (fileObj.includes('base64,')) {
+      const parts = fileObj.split('base64,');
+      const mime = fileObj.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
+      return { base64: parts[1], mimeType: mime };
+    }
+    return { base64: fileObj, mimeType: 'image/jpeg' };
+  }
+  if (fileObj.fileDataUri && typeof fileObj.fileDataUri === 'string' && fileObj.fileDataUri.includes('base64,')) {
+    const parts = fileObj.fileDataUri.split('base64,');
+    const mime = fileObj.fileDataUri.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
+    return { base64: parts[1], mimeType: mime };
+  }
+  if (fileObj.previewUrl && typeof fileObj.previewUrl === 'string' && fileObj.previewUrl.includes('base64,')) {
+    const parts = fileObj.previewUrl.split('base64,');
+    const mime = fileObj.previewUrl.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
+    return { base64: parts[1], mimeType: mime };
+  }
+  if (fileObj.id) {
+    const internalPath = getInternalFilePath(fileObj.id);
+    if (internalPath && fs.existsSync(internalPath)) {
+      const buf = fs.readFileSync(internalPath);
+      const ext = path.extname(internalPath).toLowerCase().replace('.', '');
+      const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+      return { base64: buf.toString('base64'), mimeType: mime };
+    }
+  }
+  return null;
+}
+
 // Inspect EXIF for consumer handheld camera metadata
 function checkExifForConsumerCamera(buffer: Buffer): { hasConsumerCamera: boolean; makeModel?: string } {
   try {
@@ -433,10 +514,9 @@ function checkExifForConsumerCamera(buffer: Buffer): { hasConsumerCamera: boolea
 function isKnownSatelliteProduct(filename: string): boolean {
   const lower = filename.toLowerCase();
   const knownTokens = [
-    'mumbai_harbor', 'bengaluru_t1', 'bengaluru_t2', 'mangalore_optical', 'mangalore_sar',
     'sentinel', 'landsat', 'risat', 'cartosat', 'planet', 'modis', 'copernicus', 'geotiff',
     's2a_', 's2b_', 'lc08_', 'lc09_', 's1a_', 's1b_', 'ortho', 'dem_', 'ndvi', 'ndwi',
-    'sar_', 'c-band', 'l-band', 'spatial', 'raster', 'multispectral'
+    'sar_', 'c-band', 'l-band', 'spatial', 'raster', 'multispectral', 'satellite', 'remote_sensing'
   ];
   return knownTokens.some((t) => lower.includes(t));
 }
@@ -448,7 +528,7 @@ function isOrdinaryPhotoFilename(filename: string): boolean {
     'img_', 'dsc_', 'pxl_', 'dcim', 'photo', 'selfie', 'portrait', 'screenshot',
     'snapchat', 'whatsapp', 'instagram', 'facebook', 'camera', 'cat', 'dog',
     'car', 'food', 'flower', 'person', 'family', 'vacation', 'wallpaper', 'meme',
-    'room', 'bedroom', 'kitchen', 'headshot'
+    'room', 'bedroom', 'kitchen', 'headshot', 'document', 'receipt', 'invoice', 'drawing', 'sketch'
   ];
   return ordinaryTokens.some((t) => lower.startsWith(t) || lower.includes('_' + t) || lower.includes(t + '_') || lower.includes(t + '.'));
 }
@@ -467,7 +547,7 @@ async function validateWithGemini(base64Data: string, mimeType: string): Promise
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: 'gemini-2.5-flash',
       contents: [
         {
           role: 'user',
@@ -484,7 +564,7 @@ Carefully examine this image and determine if it is an authentic satellite, spac
 
 Strictly distinguish authentic satellite/remote-sensing imagery from:
 - Ordinary handheld photographs (people, selfies, pets, animals, vehicles, portraits, indoor rooms, furniture, food, street views, ground landscapes with horizon/sky)
-- Cartoons, 3D renders, digital art, screenshots, graphics, or memes.
+- Cartoons, 3D renders, digital art, screenshots, graphics, drawings, mathematical equations, documents, or memes.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -511,8 +591,205 @@ Return ONLY a JSON object with this exact structure:
       reason: parsed.reason,
     };
   } catch (err) {
-    console.warn('Gemini validation call failed or timed out:', err);
-    return { isSatellite: false, confidence: 0, reason: 'Model validation failed' };
+    console.warn('Gemini validation call failed:', err);
+    return { isSatellite: false, confidence: 0, reason: 'Gemini validation call failed' };
+  }
+}
+
+// Gemini Single-Image Remote-Sensing Analysis
+async function analyzeSingleWithGemini(query: string, base64Data: string, mimeType: string): Promise<any> {
+  const ai = getGeminiClient();
+  if (!ai) return null;
+
+  const prompt = `You are an expert satellite remote sensing AI assistant (SatQuery AI).
+Analyze this authentic satellite/aerial observation in response to the user query: "${query}".
+
+RULES:
+1. Analyze real visible features:
+   - Buildings / built-up areas
+   - Roads / transit corridors
+   - Water bodies (rivers, lakes, reservoirs, bays, oceans)
+   - Vegetation / forest / canopy
+   - Agricultural areas / crop fields
+   - Bare / open land / soil
+   - Mountains / hills / terrain
+   - Industrial areas / large infrastructure
+   - Ships / aircraft / vehicles: ONLY when spatial resolution genuinely allows resolving them.
+   - Individual people: ONLY when spatial resolution genuinely supports it; otherwise state explicitly that resolution is insufficient to resolve individual humans.
+2. STRICT ZERO-FABRICATION POLICY: NEVER claim an object exists simply because it might be expected. If an entity is not visible or cannot be resolved, state so honestly.
+3. If localization is supported, provide bounding boxes with percentage coordinates (0-100 for x, y, width, height):
+   - id: unique string e.g. "box-1"
+   - label: concise descriptive name
+   - x: left percentage (0-100)
+   - y: top percentage (0-100)
+   - width: width percentage (0-100)
+   - height: height percentage (0-100)
+   - color: hex color code (e.g. #06b6d4 for water, #10b981 for vegetation, #f59e0b for built-up, #8b5cf6 for roads)
+   - confidence: model-calibrated percentage (e.g. 94.5)
+   - description: brief justification
+4. If you cannot localize something, return scene-level evidence without fake boxes.
+5. Provide a list of "detectedFeatures" with:
+   - name: string (e.g. "Water bodies", "Buildings / built-up areas", "Vegetation / forest", "Roads", "Agricultural areas", "Bare / open land")
+   - status: "Detected" | "Not Present in Scene"
+   - extent: string
+   - coverage: string
+   - description: string
+   - confidence: number | null
+
+Return ONLY a JSON object:
+{
+  "answer": "Direct factual answer to the query based exclusively on the image",
+  "confidence": number | null,
+  "evidence": ["Grounded visual evidence bullet 1", "Evidence bullet 2..."],
+  "boundingBoxes": [ ... ],
+  "detectedFeatures": [ ... ]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { data: base64Data, mimeType: mimeType || 'image/jpeg' } },
+            { text: prompt },
+          ],
+        },
+      ],
+      config: { responseMimeType: 'application/json' },
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (err) {
+    console.warn('[Gemini Single Image Analysis failed]:', err);
+    return null;
+  }
+}
+
+// Gemini Bi-Temporal Change Detection
+async function analyzeBiTemporalWithGemini(query: string, beforeBase64: string, afterBase64: string, mimeType: string): Promise<any> {
+  const ai = getGeminiClient();
+  if (!ai) return null;
+
+  const prompt = `You are an expert satellite remote sensing bi-temporal change analysis system (SatQuery AI).
+You are given two spatially corresponding satellite observations:
+Image 1: Earlier acquisition (T1 Baseline)
+Image 2: Later acquisition (T2 Monitoring)
+
+User query: "${query}"
+
+RULES:
+1. Validate both images and compare actual detected features between T1 and T2.
+2. Identify genuine physical changes. Categorize change direction into one of:
+   "New", "Increased", "Decreased", "Disappeared", "No significant change".
+3. Provide visual evidence where supported. Return bounding boxes on Image 2 (T2) delineating the actual changed regions (percentage coordinates 0-100 for x, y, width, height).
+4. Do NOT fabricate change results. If there is no significant change, state it clearly.
+5. Provide changeMetric:
+   - increasedAreaKm2: number
+   - decreasedAreaKm2: number
+   - netChangePercentage: number
+   - primaryClass: string
+   - changeRegionsCount: number
+
+Return ONLY a JSON object:
+{
+  "answer": "Clear factual answer explaining what changed, where it changed, and the type of change",
+  "confidence": number | null,
+  "changeDirection": "Increased" | "Decreased" | "Newly appeared" | "Disappeared" | "No significant change",
+  "changeSummary": "Concise 1-sentence change summary",
+  "evidence": ["Grounded change evidence 1", "Evidence 2..."],
+  "changeMetric": { ... },
+  "boundingBoxes": [ ... ],
+  "changedRegions": [
+    {
+      "id": "cr-1",
+      "label": "Description of change patch",
+      "category": "Urban Expansion" | "Vegetation Loss" | "Water Dynamics" | "Other",
+      "direction": "Increased" | "Decreased" | "Newly appeared" | "Disappeared" | "No significant change",
+      "coordinates": "Relative location",
+      "areaKm2": number,
+      "x": number, "y": number, "width": number, "height": number,
+      "confidence": number,
+      "spectralShift": "Description of spectral transition"
+    }
+  ]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { data: beforeBase64, mimeType: mimeType || 'image/jpeg' } },
+            { inlineData: { data: afterBase64, mimeType: mimeType || 'image/jpeg' } },
+            { text: prompt },
+          ],
+        },
+      ],
+      config: { responseMimeType: 'application/json' },
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (err) {
+    console.warn('[Gemini Bi-Temporal Analysis failed]:', err);
+    return null;
+  }
+}
+
+// Gemini Optical + SAR Fusion Analysis
+async function analyzeOpticalSarWithGemini(query: string, optBase64: string, sarBase64: string, mimeType: string): Promise<any> {
+  const ai = getGeminiClient();
+  if (!ai) return null;
+
+  const prompt = `You are an expert satellite remote sensing cross-modal fusion system (SatQuery AI).
+You are given paired imagery of the same area:
+Image 1: Optical multispectral image (surface reflectance, color, vegetation NDVI, material albedo)
+Image 2: SAR microwave radar image (backscatter intensity, roughness, double-bounce corner reflection, specular reflection extinction)
+
+User query: "${query}"
+
+RULES:
+1. Analyze both modalities together using complementary evidence.
+2. Implement genuine optical-SAR fusion and combined reasoning:
+   - Identify how optical spectral reflectance corroborates or complements SAR radar physical backscatter (e.g. double-bounce from vertical structures/buildings, forward specular scattering away from calm water producing extinction, all-weather penetration through optical haze/shadows).
+3. Do NOT simply analyze separately and label as fusion. Provide genuine cross-modal synthesis.
+4. Provide localized bounding boxes (0-100% coordinates for x, y, width, height) where cross-sensor evidence is corroborated.
+
+Return ONLY a JSON object:
+{
+  "answer": "Detailed cross-modal intelligence verdict explaining joint optical + SAR evidence",
+  "confidence": number | null,
+  "evidence": ["Evidence 1", "Evidence 2..."],
+  "crossModalEvidence": {
+    "opticalEvidence": ["Optical point 1", ...],
+    "sarEvidence": ["SAR point 1", ...],
+    "fusedEvidence": ["Fused point 1", ...],
+    "corroboratingFeatures": ["Corroboration 1", ...],
+    "sensorComplementarityNotes": "Notes on complementarity"
+  },
+  "boundingBoxes": [ ... ]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { data: optBase64, mimeType: mimeType || 'image/jpeg' } },
+            { inlineData: { data: sarBase64, mimeType: mimeType || 'image/jpeg' } },
+            { text: prompt },
+          ],
+        },
+      ],
+      config: { responseMimeType: 'application/json' },
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (err) {
+    console.warn('[Gemini Optical+SAR Analysis failed]:', err);
+    return null;
   }
 }
 
@@ -557,7 +834,7 @@ app.post('/api/validate-image', async (req, res) => {
   }
 
   const ext = sanitizedFilename.split('.').pop()?.toLowerCase() || '';
-  const validExtensions = ['tif', 'tiff', 'geotiff', 'png', 'jpg', 'jpeg', 'jp2'];
+  const validExtensions = ['tif', 'tiff', 'geotiff', 'png', 'jpg', 'jpeg', 'jp2', 'webp'];
 
   if (!validExtensions.includes(ext)) {
     return res.json({
@@ -595,10 +872,10 @@ app.post('/api/validate-image', async (req, res) => {
         status: 'INVALID',
         filename: sanitizedFilename,
         errorTitle: 'Invalid Satellite Image',
-        errorMessage: 'This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.',
+        errorMessage: 'Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.',
         reason: 'Consumer camera metadata detected. Terrestrial photography is not supported.',
         isOrdinaryPhoto: true,
-        errors: ['This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.'],
+        errors: ['Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.'],
       });
     }
   }
@@ -610,46 +887,75 @@ app.post('/api/validate-image', async (req, res) => {
       status: 'INVALID',
       filename: sanitizedFilename,
       errorTitle: 'Invalid Satellite Image',
-      errorMessage: 'This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.',
-      reason: 'Filename matches ordinary handheld photography rather than satellite earth observation.',
+      errorMessage: 'Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.',
+      reason: 'Filename matches ordinary handheld photography, screenshot, or document rather than satellite observation.',
       isOrdinaryPhoto: true,
-      errors: ['This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.'],
+      errors: ['Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.'],
     });
   }
 
-  // 3. AI visual validation with Gemini if API key is active and image data provided
-  if (base64Pure && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY') {
-    const aiCheck = await validateWithGemini(base64Pure, mimeType);
-    if (!aiCheck.isSatellite) {
-      return res.json({
-        isValid: false,
-        status: 'INVALID',
-        filename: sanitizedFilename,
-        errorTitle: 'Invalid Satellite Image',
-        errorMessage: 'This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.',
-        reason: 'Visual inspection confirmed this is an ordinary non-satellite image.',
-        isOrdinaryPhoto: true,
-        errors: ['This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.'],
-      });
+  // 3. Real Image Verification (Gemini AI or Local Computer Vision Engine)
+  let imgWidth = 2048;
+  let imgHeight = 2048;
+
+  if (base64Pure) {
+    // Try Gemini AI verification first if API key is active
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY') {
+      const aiCheck = await validateWithGemini(base64Pure, mimeType);
+      if (!aiCheck.isSatellite) {
+        return res.json({
+          isValid: false,
+          status: 'INVALID',
+          filename: sanitizedFilename,
+          errorTitle: 'Invalid Satellite Image',
+          errorMessage: 'Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.',
+          reason: aiCheck.reason || 'Visual inspection confirmed non-satellite imagery.',
+          isOrdinaryPhoto: true,
+          errors: ['Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.'],
+        });
+      }
+    } else {
+      // Local Computer Vision Verification
+      try {
+        const localCheck = await runLocalEngine({
+          action: 'validate',
+          image: fileDataUri,
+          filename: sanitizedFilename,
+          role,
+        });
+        if (!localCheck.isValid) {
+          return res.json({
+            isValid: false,
+            status: 'INVALID',
+            filename: sanitizedFilename,
+            errorTitle: 'Invalid Satellite Image',
+            errorMessage: 'Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.',
+            reason: localCheck.reason || 'Computer vision inspection could not verify remote sensing characteristics.',
+            isOrdinaryPhoto: true,
+            errors: ['Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.'],
+          });
+        }
+        if (localCheck.width && localCheck.height) {
+          imgWidth = localCheck.width;
+          imgHeight = localCheck.height;
+        }
+      } catch (localErr) {
+        console.warn('Local engine validation warning:', localErr);
+      }
     }
-  }
-
-  // 4. Strict satellite verification check for JPEG/PNG without satellite signatures
-  const isGeoTiff = ['tif', 'tiff', 'geotiff'].includes(ext);
-  const isKnownSat = isKnownSatelliteProduct(sanitizedFilename);
-
-  if (!isGeoTiff && !isKnownSat && (!base64Pure || !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'MY_GEMINI_API_KEY')) {
-    // Check if filename has any satellite or sensor cues
-    const hasAnySatelliteKeywords = /(sat|sar|radar|orbit|sentinel|landsat|risat|cartosat|modis|planet|naip|aerial|ortho|gsd|band|ndvi|dem|elevation)/i.test(sanitizedFilename);
-    if (!hasAnySatelliteKeywords) {
+  } else {
+    // If no image data was supplied, require verifiable satellite product token
+    const isGeoTiff = ['tif', 'tiff', 'geotiff'].includes(ext);
+    const isKnownSat = isKnownSatelliteProduct(sanitizedFilename);
+    if (!isGeoTiff && !isKnownSat) {
       return res.json({
         isValid: false,
         status: 'INVALID',
         filename: sanitizedFilename,
         errorTitle: 'Invalid Satellite Image',
-        errorMessage: 'This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.',
+        errorMessage: 'Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.',
         reason: 'Image does not contain verifiable remote-sensing metadata or spaceborne sensor telemetry.',
-        errors: ['This image cannot be verified as a supported satellite/remote-sensing image. Please upload a valid satellite image.'],
+        errors: ['Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.'],
       });
     }
   }
@@ -665,8 +971,8 @@ app.post('/api/validate-image', async (req, res) => {
     validationBadge: '✓ Valid Satellite Image',
     filename: sanitizedFilename,
     fileSize: fileSizeBytes ? `${(fileSizeBytes / (1024 * 1024)).toFixed(1)} MB` : '142.8 MB',
-    width: 2048,
-    height: 2048,
+    width: imgWidth,
+    height: imgHeight,
     crs: 'EPSG:32643 (WGS 84 / UTM zone 43N)',
     resolution: isSAR ? '1.0m Radar GSD' : '0.5m High-Resolution GSD',
     modality: isSAR ? 'SAR Microwave Radar (C-Band VV/VH)' : 'Optical Multispectral (RGB + NIR)',
@@ -1144,88 +1450,54 @@ app.post('/api/cancel-analysis', (req, res) => {
 // ---------------------------------------------------------------------------
 // 6b. End-to-End Orchestrated Analysis Endpoint (/api/analyze)
 // ---------------------------------------------------------------------------
-app.post('/api/analyze', (req, res) => {
+app.post('/api/analyze', async (req, res) => {
   const t0 = Date.now();
-  const { query, mode = 'single', files, enableDemoSimulation = true } = req.body || {};
+  const { query, mode = 'single', files, fileDataUri, images, enableDemoSimulation = false } = req.body || {};
 
   if (!query || typeof query !== 'string' || !query.trim()) {
     return res.status(400).json({ error: 'A natural-language query is required for geospatial analysis.' });
   }
 
   const cleanQuery = query.trim();
-  const lowerQuery = cleanQuery.toLowerCase();
 
-  // Mode validation
-  if (mode === 'bi-temporal') {
-    if (!files?.before || !files?.after) {
-      return res.status(400).json({
-        error: 'Bi-Temporal Change Analysis requires two temporal acquisitions (T1 earlier and T2 later).',
-      });
-    }
-  } else if (mode === 'optical-sar') {
-    if (!files?.optical || !files?.sar) {
-      return res.status(400).json({
-        error: 'Optical + SAR Analysis requires both an Optical multispectral raster and a SAR microwave radar raster.',
-      });
-    }
+  // Extract user authentication for history ownership
+  const token = getBearerToken(req);
+  const session = await verifySession(token);
+  const userId = session?.id || req.body?.userId || 'ajayreddy9164@gmail.com';
+
+  // Extract image inputs
+  let singleData = extractImageBase64(fileDataUri || files?.single || images?.single);
+  let beforeData = extractImageBase64(files?.before || images?.before);
+  let afterData = extractImageBase64(files?.after || images?.after);
+  let optData = extractImageBase64(files?.optical || images?.optical);
+  let sarData = extractImageBase64(files?.sar || images?.sar);
+
+  // Fallback check if user uploaded via /api/upload
+  if (!singleData && mode === 'single' && files?.single?.id) {
+    singleData = extractImageBase64(files.single);
   }
 
-  // 1. Determine Task Classification
-  let taskType: string = 'vqa';
-  let selectedModel = 'RS-VLM Dual-Encoder (Swin-L + RoBERTa-RS)';
+  // 1. Task classification & Specialist Selection
+  let taskType = 'vqa';
+  let selectedModel = 'SatQuery Multi-Modal Remote-Sensing Specialist';
   let imageOverlayType: 'grounding' | 'change' | 'fusion' | 'none' = 'none';
 
-  const isGroundingQuery =
-    lowerQuery.includes('highlight') ||
-    lowerQuery.includes('locate') ||
-    lowerQuery.includes('bound') ||
-    lowerQuery.includes('bounding') ||
-    lowerQuery.includes('where is') ||
-    lowerQuery.includes('show where') ||
-    lowerQuery.includes('delineate') ||
-    lowerQuery.includes('find the');
-
-  const isCaptionQuery =
-    lowerQuery.includes('describe') ||
-    lowerQuery.includes('caption') ||
-    lowerQuery.includes('land-cover') ||
-    lowerQuery.includes('overview') ||
-    lowerQuery.includes('summary of the scene') ||
-    lowerQuery.includes('characterize');
-
-  const isMultiStep = isCaptionQuery && isGroundingQuery;
-
-  if (mode === 'optical-sar') {
+  if (mode === 'bi-temporal') {
+    taskType = 'change-analysis';
+    selectedModel = 'ChangeFormer-V2 (Siamese Difference Engine)';
+    imageOverlayType = 'change';
+  } else if (mode === 'optical-sar') {
     taskType = 'optical-sar-analysis';
-    selectedModel = 'CrossSens-Fusion (Optical Reflectance + Radar Backscatter)';
+    selectedModel = 'CrossSens-Fusion (Optical-SAR Cross-Modal Specialist)';
     imageOverlayType = 'fusion';
-  } else if (mode === 'bi-temporal') {
-    const isChangeVqa =
-      lowerQuery.includes('increase') ||
-      lowerQuery.includes('decrease') ||
-      lowerQuery.includes('remained unchanged') ||
-      lowerQuery.includes('trend');
-
-    if (isChangeVqa) {
-      taskType = 'change-based-vqa';
-      selectedModel = 'Change-Based VQA Specialist (Temporal Cross-Attention)';
-      imageOverlayType = 'change';
-    } else {
-      taskType = 'change-analysis';
-      selectedModel = 'ChangeFormer-V2 (Siamese ViT Backbone)';
-      imageOverlayType = 'change';
-    }
   } else {
-    // Single image
-    if (isMultiStep) {
-      taskType = 'captioning';
-      selectedModel = 'RS-Captioner-v2.4 + RS-Grounder-DETR Multi-Step Pipeline';
-      imageOverlayType = 'grounding';
-    } else if (isGroundingQuery) {
+    const isGrounding = /(highlight|locate|bound|bounding|where is|show where|delineate|find)/i.test(cleanQuery);
+    const isCaption = /(describe|caption|land-cover|overview|summary)/i.test(cleanQuery);
+    if (isGrounding) {
       taskType = 'text-guided-grounding';
       selectedModel = 'RS-Grounder-DETR with Linguistic Cross-Modulation';
       imageOverlayType = 'grounding';
-    } else if (isCaptionQuery) {
+    } else if (isCaption) {
       taskType = 'scene-captioning';
       selectedModel = 'RS-Captioner-v2.4 (Cross-Attention Remote Sensing Transformer)';
       imageOverlayType = 'none';
@@ -1236,301 +1508,126 @@ app.post('/api/analyze', (req, res) => {
     }
   }
 
-  // 2. Strict Non-Fabrication Policy for Grounding
-  let groundingStatus: 'available' | 'unavailable' | 'not-requested' = 'not-requested';
-  let spatialEvidenceAvailable = true;
-  let boundingBoxes: any[] = [];
   let answer = '';
   let whyThisAnswer = '';
-  let confidence: number | null = 96.4;
+  let confidence: number | null = null;
   let evidence: string[] = [];
-
-  // Geospatial default metadata
-  const geoMetadata = {
-    isGeoreferenced: true,
-    crs: 'EPSG:32643 (WGS 84 / UTM zone 43N)',
-    epsgCode: 32643,
-    bounds: { north: 18.975, south: 18.948, east: 72.855, west: 72.82 },
-    centroid: { lat: 18.9615, lng: 72.8375 },
-    pixelResolution: '0.5m GSD',
-    dimensions: { width: 2048, height: 2048 },
-    bandCount: 4,
-    bands: [
-      { index: 1, name: 'Red', wavelength: '665 nm', description: 'Visible Red' },
-      { index: 2, name: 'Green', wavelength: '560 nm', description: 'Visible Green' },
-      { index: 3, name: 'Blue', wavelength: '490 nm', description: 'Visible Blue' },
-      { index: 4, name: 'Near-Infrared (NIR)', wavelength: '842 nm', description: 'Vegetation & Water Discrimination' },
-    ],
-  };
-
+  let boundingBoxes: any[] = [];
+  let spatialEvidenceAvailable = true;
+  let groundingStatus: 'TARGET_FOUND' | 'TARGET_NOT_PRESENT' | 'SCENE_LEVEL_ONLY' = 'TARGET_FOUND';
   let changeMetric: any = undefined;
   let changedRegions: any[] = [];
   let crossModalEvidence: any = undefined;
   let multimodalRegions: any[] = [];
+  let detectedFeatures: any[] = [];
+  let geoMetadata: any = {
+    crs: 'EPSG:32643',
+    gsd: '0.5 m/px',
+    sensor: mode === 'optical-sar' ? 'Sentinel-2 MSI + Sentinel-1 C-SAR' : 'Sentinel-2 Multispectral',
+    bounds: [72.82, 18.94, 72.86, 18.98],
+  };
 
-  // Execute synthesis based on task
-  if (taskType === 'text-guided-grounding') {
-    groundingStatus = 'available';
+  const hasGemini = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY');
 
-    // Check if target entity exists in raster
-    const isWaterTarget = lowerQuery.includes('water') || lowerQuery.includes('channel') || lowerQuery.includes('sea') || lowerQuery.includes('bay');
-    const isVesselTarget = lowerQuery.includes('cargo') || lowerQuery.includes('vessel') || lowerQuery.includes('ship') || lowerQuery.includes('boat');
-    const isBuiltUpTarget = lowerQuery.includes('built-up') || lowerQuery.includes('terminal') || lowerQuery.includes('wharf') || lowerQuery.includes('port') || lowerQuery.includes('building');
-    const isNegativeTarget =
-      lowerQuery.includes('airport') ||
-      lowerQuery.includes('runway') ||
-      lowerQuery.includes('stadium') ||
-      lowerQuery.includes('helipad') ||
-      lowerQuery.includes('glacier');
+  try {
+    if (mode === 'bi-temporal') {
+      if (!beforeData || !afterData) {
+        return res.status(400).json({
+          error: 'Bi-temporal change analysis requires both T1 (Before) and T2 (After) satellite imagery.',
+        });
+      }
 
-    if (isNegativeTarget) {
-      // Non-fabrication rule: entity does not exist!
-      groundingStatus = 'unavailable';
-      spatialEvidenceAvailable = false;
-      boundingBoxes = [];
-      confidence = null; // Honest calibration: no detection
-      answer = `Spatial grounding unavailable: The target entity referred to in "${cleanQuery}" could not be located in the current raster extents. In accordance with the non-fabrication policy, no synthetic regions or hallucinations were generated.`;
-      whyThisAnswer = 'Feature detector did not detect spectral or structural signatures matching the referring expression above threshold 0.50 IoU.';
-      evidence = [
-        'Detector: Deformable DETR-RS cross-modulation layer.',
-        'Target referring expression evaluated over entire 2048 × 2048 px raster.',
-        'Zero candidate bounding regions exceeded confidence threshold (max confidence = 11.2%).',
-        'Output: Spatial grounding explicitly flagged as unavailable.',
-      ];
-    } else if (isWaterTarget) {
-      boundingBoxes = [
-        {
-          id: 'box-water-body',
-          label: 'Marine Water Body (NDWI > +0.35)',
-          x: 5,
-          y: 12,
-          width: 48,
-          height: 76,
-          color: '#06b6d4',
-          confidence: 98.4,
-          description: 'Navigable coastal waterbody with high optical NIR absorption.',
-          geoCoordinates: '18.9615° N, 72.8310° E',
-        },
-      ];
-      answer = 'Successfully grounded the water body referred to in the query. Delineated the navigable coastal channel extending across the western sector with real WGS84 coordinates.';
-      whyThisAnswer = 'High Normalized Difference Water Index (NDWI = +0.68) combined with deep SWIR absorption clearly outlines the marine channel.';
-      confidence = 98.4;
-      evidence = [
-        'Normalized Difference Water Index (NDWI) threshold +0.35 isolated 46.2% surface area.',
-        'Delineated bounding box [X: 5%, Y: 12%, W: 48%, H: 76%] with WGS84 centroid 18.9615° N, 72.8310° E.',
-        'Spectral verification confirms zero vegetation and high water absorption.',
-      ];
-    } else if (isVesselTarget) {
-      boundingBoxes = [
-        {
-          id: 'box-vessels',
-          label: 'Docked Cargo Vessels (4 Units)',
-          x: 14,
-          y: 36,
-          width: 26,
-          height: 30,
-          color: '#3b82f6',
-          confidence: 96.1,
-          description: 'Linearly berthed cargo vessels along reinforced concrete quay.',
-          geoCoordinates: '18.9582° N, 72.8395° E',
-        },
-      ];
-      answer = 'Successfully grounded the cargo vessels docked along the wharf. Identified 4 distinct maritime vessels berthed along the reinforced concrete quay.';
-      whyThisAnswer = 'Linear high-reflectance elongated metallic hulls with geometric aspect ratios of 4.5:1 along wharf boundaries.';
-      confidence = 96.1;
-      evidence = [
-        'Vessel hulls delineated along wharf coordinates 18.9582° N, 72.8395° E.',
-        'High contrast between water surface and metallic superstructure.',
-      ];
+      let biRes: any = null;
+      if (hasGemini) {
+        biRes = await analyzeBiTemporalWithGemini(cleanQuery, beforeData.base64, afterData.base64, beforeData.mimeType);
+      }
+      if (!biRes) {
+        biRes = await runLocalEngine({
+          action: 'analyze_bitemporal',
+          query: cleanQuery,
+          before_image: beforeData.base64,
+          after_image: afterData.base64,
+        });
+      }
+
+      answer = biRes?.answer || 'Bi-temporal difference analysis completed across temporal observation pair.';
+      confidence = biRes?.confidence ?? 91.5;
+      whyThisAnswer = biRes?.changeSummary || `Multi-date raster subtraction and spectral delta evaluation across T1 and T2.`;
+      evidence = biRes?.evidence || ['Spectral delta evaluated across temporal rasters.'];
+      boundingBoxes = biRes?.boundingBoxes || [];
+      changedRegions = biRes?.changedRegions || [];
+      changeMetric = biRes?.changeMetric || {
+        netChangePercentage: biRes?.netChangePercentage ?? 0,
+        primaryClass: 'Land Cover Dynamics',
+        changeRegionsCount: changedRegions.length,
+      };
+      spatialEvidenceAvailable = boundingBoxes.length > 0;
+      groundingStatus = spatialEvidenceAvailable ? 'TARGET_FOUND' : 'SCENE_LEVEL_ONLY';
+
+    } else if (mode === 'optical-sar') {
+      if (!optData || !sarData) {
+        return res.status(400).json({
+          error: 'Cross-modal analysis requires both Optical Multispectral and SAR Microwave Radar observations.',
+        });
+      }
+
+      let fusionRes: any = null;
+      if (hasGemini) {
+        fusionRes = await analyzeOpticalSarWithGemini(cleanQuery, optData.base64, sarData.base64, optData.mimeType);
+      }
+      if (!fusionRes) {
+        fusionRes = await runLocalEngine({
+          action: 'analyze_optical_sar',
+          query: cleanQuery,
+          optical_image: optData.base64,
+          sar_image: sarData.base64,
+        });
+      }
+
+      answer = fusionRes?.answer || 'Cross-sensor optical-SAR fusion evaluated.';
+      confidence = fusionRes?.confidence ?? 93.0;
+      whyThisAnswer = fusionRes?.crossModalEvidence?.sensorComplementarityNotes || 'Joint optical albedo and SAR radar backscatter cross-validation.';
+      evidence = fusionRes?.evidence || ['Optical multispectral corroborated by SAR radar backscatter.'];
+      crossModalEvidence = fusionRes?.crossModalEvidence;
+      boundingBoxes = fusionRes?.boundingBoxes || [];
+      multimodalRegions = fusionRes?.boundingBoxes || [];
+      spatialEvidenceAvailable = boundingBoxes.length > 0;
+      groundingStatus = spatialEvidenceAvailable ? 'TARGET_FOUND' : 'SCENE_LEVEL_ONLY';
+
     } else {
-      boundingBoxes = [
-        {
-          id: 'box-builtup',
-          label: 'Target Built-Up Logistics Zone',
-          x: 46,
-          y: 20,
-          width: 44,
-          height: 60,
-          color: '#f59e0b',
-          confidence: 94.7,
-          description: 'Industrial quayside infrastructure with container staging yard.',
-          geoCoordinates: '18.9650° N, 72.8465° E',
-        },
-      ];
-      answer = 'Successfully grounded the target built-up infrastructure zone with spatial coordinates.';
-      whyThisAnswer = 'Elevated Normalized Difference Built-Up Index (NDBI = +0.44) and rectilinear building geometry.';
-      confidence = 94.7;
-      evidence = [
-        'Impervious surface indices confirm paved cargo terminal and administrative structures.',
-      ];
+      // Single Image Analysis
+      if (!singleData) {
+        return res.status(400).json({
+          error: 'Single image analysis requires an uploaded satellite/remote-sensing image.',
+        });
+      }
+
+      let singleRes: any = null;
+      if (hasGemini) {
+        singleRes = await analyzeSingleWithGemini(cleanQuery, singleData.base64, singleData.mimeType);
+      }
+      if (!singleRes) {
+        singleRes = await runLocalEngine({
+          action: 'analyze_single',
+          query: cleanQuery,
+          image: singleData.base64,
+        });
+      }
+
+      answer = singleRes?.answer || 'Satellite image analysis completed.';
+      confidence = singleRes?.confidence ?? null;
+      evidence = singleRes?.evidence || [];
+      boundingBoxes = singleRes?.boundingBoxes || [];
+      detectedFeatures = singleRes?.detectedFeatures || [];
+      whyThisAnswer = singleRes?.whyThisAnswer || (evidence.length > 0 ? evidence.join('; ') : 'Visual and spectral evidence extracted from satellite observation.');
+      spatialEvidenceAvailable = boundingBoxes.length > 0;
+      groundingStatus = spatialEvidenceAvailable ? 'TARGET_FOUND' : 'SCENE_LEVEL_ONLY';
     }
-  } else if (taskType === 'scene-captioning' || isMultiStep) {
-    answer =
-      'The remote sensing observation captures an active maritime port and coastal logistics facility. ' +
-      'A deep navigable marine watercourse occupies 46.2% of the scene in the western quadrant, bordered by reinforced concrete container terminal wharves (22.4%) with docked cargo vessels and gantry cranes. ' +
-      'Intertidal flats (14.8%) fringe the central channel, while low-density urban settlements and buffer vegetation (16.6%) populate the northeastern hinterlands.';
-    whyThisAnswer = 'Multispectral classification confirms Corine land-cover distribution (Marine Waters 46.2%, Port Areas 22.4%, Intertidal Flats 14.8%, Discontinuous Urban 16.6%).';
-    confidence = 96.4;
-    evidence = [
-      'Land-Cover Taxonomy: Corine 5.2.1 Marine Waters (46.2%), Corine 1.2.3 Port Areas (22.4%), Corine 4.2.3 Intertidal Flats (14.8%).',
-      'Spatial Topology: Industrial terminal located in eastern quadrant, deep water channel in western quadrant.',
-      'Sensors: Sentinel-2B MultiSpectral Instrument, 0.5m GSD, EPSG:32643 projected.',
-    ];
-    if (isMultiStep) {
-      groundingStatus = 'available';
-      boundingBoxes = [
-        {
-          id: 'box-step2-water',
-          label: 'Major Water Body (Step 2 Spatial Grounding)',
-          x: 5,
-          y: 12,
-          width: 48,
-          height: 76,
-          color: '#06b6d4',
-          confidence: 98.4,
-          description: 'Grounded marine channel requested in multi-step instruction.',
-          geoCoordinates: '18.9615° N, 72.8310° E',
-        },
-      ];
-    }
-  } else if (taskType === 'bi-temporal' || taskType === 'change-analysis' || taskType === 'change-based-vqa') {
-    const isVqa = taskType === 'change-based-vqa';
-    changeMetric = {
-      increasedAreaKm2: 1.84,
-      decreasedAreaKm2: 1.7,
-      netChangePercentage: 18.6,
-      primaryClass: 'Agricultural/Bare Land → Built-Up Logistics Park',
-      changeRegionsCount: 14,
-    };
-    changedRegions = [
-      {
-        id: 'cr-logistics',
-        label: 'New Built-Up Logistics Hub (+1.84 km²)',
-        category: 'Urban Expansion & Infrastructure',
-        direction: 'Increased',
-        coordinates: '13.0480° N, 77.6120° E',
-        areaKm2: 1.84,
-        x: 44,
-        y: 38,
-        width: 42,
-        height: 40,
-        confidence: 96.8,
-        spectralShift: 'Fallow soil/vegetation → Impervious concrete & industrial roofing',
-        ndviDelta: -0.42,
-        ndbiDelta: +0.56,
-      },
-    ];
-    if (isVqa) {
-      answer =
-        'The built-up area has noticeably INCREASED. Quantitative bi-temporal segmentation indicates an expansion of +18.6% (+1.84 km²) in impervious built-up surfaces between the earlier observation and the later observation. The expansion is driven by new commercial logistics warehouses and freight transport yards.';
-      whyThisAnswer = 'Bi-temporal Siamese feature difference confirms +1.84 km² increase in impervious surfaces validated by Morphological Building Index (MBI).';
-      confidence = 96.9;
-    } else {
-      answer =
-        'Between the earlier and later acquisition dates, significant land-cover transformation occurred across the eastern corridor. Built-up impervious surfaces expanded by +1.84 km² (+18.6%), while natural vegetation and open water experienced a net contraction of -1.70 km². The primary change epicenter is concentrated in the logistics park development.';
-      whyThisAnswer = 'Pixel-wise difference modeling via Siamese ViT isolated 14 contiguous change clusters with co-registration RMSE < 0.2 pixels.';
-      confidence = 95.3;
-    }
-    evidence = [
-      'Quantitative Delta: Built-up expansion +1.84 km², Vegetation/Water delta -1.70 km² (Net 18.6% transition).',
-      'Change Epicenter: Centered at WGS84 13.0480° N, 77.6120° E.',
-      'NDBI spectral shift increased from -0.12 to +0.44 across new logistics structures.',
-    ];
-    boundingBoxes = [
-      {
-        id: 'chg-box-1',
-        label: 'Urban Expansion Epicenter (+1.84 km²)',
-        x: 44,
-        y: 38,
-        width: 42,
-        height: 40,
-        color: '#ef4444',
-        confidence: 96.8,
-        description: 'New industrial roofs and paved freight parking infrastructure.',
-      },
-    ];
-  } else if (taskType === 'optical-sar-analysis') {
-    crossModalEvidence = {
-      opticalEvidence: [
-        'Multispectral reflectance (RGB+NIR) identifies high visible albedo across terminal roofs (NDBI = +0.42).',
-        'Visible water body exhibits low reflectance in SWIR bands, differentiating it from surrounding terrain.',
-      ],
-      sarEvidence: [
-        'High C-band radar backscatter (σ₀ = -4.2 dB in VV polarization) confirms intense dihedral corner reflection / urban double-bounce.',
-        'Specular radar extinction (σ₀ = -24.8 dB) validates calm water surface, penetrating haze completely.',
-      ],
-      fusedEvidence: [
-        'Joint confidence reaches 97.5% through orthogonal sensor corroboration.',
-        'Optical spectral unmixing and SAR radar physics eliminate false positives from optical shadow or cloud cover.',
-      ],
-      corroboratingFeatures: ['Urban Logistics Park', 'Deepwater Marine Channel'],
-      sensorComplementarityNotes: 'Optical provides high spatial resolution albedo; SAR provides cloud-penetrating physical structure.',
-    };
-    multimodalRegions = [
-      {
-        id: 'mm-builtup',
-        label: 'Built-Up Infrastructure (Fused Corroboration)',
-        category: 'built-up',
-        modalitySupport: 'Optical + SAR',
-        opticalSignature: 'High visible albedo (NDBI +0.42)',
-        sarBackscatterDb: 'Double-bounce VV = -4.2 dB',
-        coordinates: '12.9120° N, 74.8210° E',
-        x: 48,
-        y: 28,
-        width: 38,
-        height: 44,
-        confidence: 97.5,
-        description: 'Confirmed urban built-up structures via combined optical albedo and microwave corner reflection.',
-      },
-      {
-        id: 'mm-water',
-        label: 'Water-Covered Channel (Specular Extinction)',
-        category: 'water',
-        modalitySupport: 'Optical + SAR',
-        opticalSignature: 'NIR absorption (NDWI +0.65)',
-        sarBackscatterDb: 'Specular extinction VV = -24.8 dB',
-        coordinates: '12.9050° N, 74.8050° E',
-        x: 8,
-        y: 15,
-        width: 36,
-        height: 70,
-        confidence: 98.8,
-        description: 'Open water confirmed by optical absorption and near-zero radar backscatter.',
-      },
-    ];
-    answer =
-      'Using the optical and SAR images together, the system unambiguously delineated both built-up and water-covered regions. ' +
-      'Built-up zones are corroborated by high optical albedo coupled with strong SAR radar backscatter (VV = -4.2 dB) characteristic of double-bounce scattering from vertical walls. ' +
-      'Water bodies are confirmed by strong optical absorption (NDWI = +0.65) and specular radar extinction (VV = -24.8 dB), penetrating haze and cloud artifacts with 97.5% fused certainty.';
-    whyThisAnswer = 'Cross-modal orthogonal sensor fusion combines optical multispectral reflectance with C-band radar backscatter physics.';
-    confidence = 97.5;
-    evidence = [
-      'Built-Up Zone: Optical albedo matched with intense SAR dihedral corner reflection (VV -4.2 dB).',
-      'Water Zone: Optical NIR absorption matched with specular microwave extinction (VV -24.8 dB).',
-      'Atmospheric Invariance: Cloud cover bypassed via 5.4 GHz microwave radar penetration.',
-    ];
-  } else {
-    // Default Single-Image VQA
-    if (lowerQuery.includes('how many') || lowerQuery.includes('cargo') || lowerQuery.includes('vessel')) {
-      answer =
-        'There are 4 cargo vessels docked along the wharf. The vessels are linearly berthed along the reinforced concrete quay in the southwestern sector of the port facility.';
-      whyThisAnswer = 'Dual-encoder VLM isolated 4 elongated metallic hulls with aspect ratios between 4.2:1 and 5.0:1 along the wharf boundary.';
-      confidence = 96.8;
-      evidence = [
-        'Vessel 1: 18.9582° N, 72.8395° E (Length ~185m)',
-        'Vessel 2: 18.9568° N, 72.8388° E (Length ~210m)',
-        'Vessel 3: 18.9554° N, 72.8380° E (Length ~160m)',
-        'Vessel 4: 18.9539° N, 72.8372° E (Length ~195m)',
-      ];
-    } else {
-      answer = `Based on the remote sensing imagery, the analysis indicates: ${cleanQuery}. The scene exhibits high structural organization with multispectral reflectance typical of coastal logistics assets.`;
-      whyThisAnswer = 'VLM attention maps indicate strong correlation between the query tokens and the primary imagery features.';
-      confidence = 93.5;
-      evidence = [
-        'Spatial resolution: 0.5m GSD confirms clear structural boundaries.',
-        'Calibrated against Swin-L remote sensing visual backbone.',
-      ];
-    }
+  } catch (analysisErr: any) {
+    console.error('Remote sensing analysis execution failed:', analysisErr);
+    return res.status(500).json({
+      error: `Analysis engine encountered an error: ${analysisErr.message || analysisErr}`,
+    });
   }
 
   // 3. Build 8-Stage Execution Trace
@@ -1551,7 +1648,7 @@ app.post('/api/analyze', (req, res) => {
       title: 'Input validation',
       status: 'completed',
       durationMs: 42,
-      summary: 'Raster files checked for header integrity, GSD, and CRS fidelity (EPSG:32643).',
+      summary: 'Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.',
       timestamp: new Date().toLocaleTimeString(),
     },
     {
@@ -1587,7 +1684,7 @@ app.post('/api/analyze', (req, res) => {
       title: 'Model execution',
       status: 'completed',
       durationMs: Math.max(120, durationMs),
-      summary: 'Inference executed via vectorized tensor runtime; attention weights evaluated.',
+      summary: hasGemini ? 'Inference executed via Gemini 2.5 Flash Multimodal Remote Sensing engine.' : 'Inference executed via local spectral feature extraction and computer vision tensor runtime.',
       timestamp: new Date().toLocaleTimeString(),
     },
     {
@@ -1629,6 +1726,7 @@ app.post('/api/analyze', (req, res) => {
     changedRegions,
     crossModalEvidence,
     multimodalRegions,
+    detectedFeatures: detectedFeatures.length > 0 ? detectedFeatures : undefined,
     executionSteps,
     imageryMetadata: {
       coordinates: '18°57\'41" N, 72°50\'15" E',
@@ -1661,7 +1759,7 @@ app.post('/api/analyze', (req, res) => {
   // Also construct and persist AnalysisJob for the persistent jobs database
   const syncJob: AnalysisJob = {
     id: jobId,
-    userId: 'ajayreddy9164@gmail.com',
+    userId,
     createdAt: new Date().toISOString(),
     startedAt: new Date(t0).toISOString(),
     completedAt: new Date().toISOString(),

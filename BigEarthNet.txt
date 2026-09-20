@@ -1,0 +1,42 @@
+# BigEarthNet 19-Class Corine Land Cover (CLC) Standard Nomenclature
+# Reference: Sumbul et al., "BigEarthNet: A Large-Scale Benchmark Dataset for Remote Sensing Image Understanding", IEEE IGARSS 2019.
+# Used for Vision-Language Pretraining and Downstream Remote-Sensing Adaptation in SatQuery AI.
+
+[CLASSES]
+1: Continuous urban fabric
+2: Discontinuous urban fabric
+3: Industrial or commercial units
+4: Arable land
+5: Permanent crops
+6: Pastures
+7: Complex cultivation patterns
+8: Land principally occupied by agriculture
+9: Broad-leaved forest
+10: Coniferous forest
+11: Mixed forest
+12: Natural grasslands and sclerophyllous vegetation
+13: Transitional woodland-shrub
+14: Beaches, dunes, sands
+15: Inland wetlands
+16: Coastal wetlands
+17: Inland waters
+18: Marine waters
+19: Bare rock and sparsely vegetated areas
+
+[MODALITIES]
+S2: Sentinel-2 Multispectral Instrument (Bands B01-B12, Level-2A BOA Reflectance)
+S1: Sentinel-1 Synthetic Aperture Radar (C-Band VV/VH Backscatter in Sigma-0 dB)
+MM: Multimodal Paired Sentinel-1 + Sentinel-2 Co-Registered Patches
+
+[TAXONOMY_MAPPING]
+Urban: [1, 2, 3]
+Agriculture: [4, 5, 6, 7, 8]
+Forest_Vegetation: [9, 10, 11, 12, 13]
+Barren_Sand: [14, 19]
+Wetlands: [15, 16]
+Water_Bodies: [17, 18]
+
+[STATUS]
+Taxonomy_Loaded: True
+Adaptation_Mode: Zero-Shot Linguistic Prior & Feature Mapping
+Fine_Tuned_Checkpoint: Not Loaded (Mount custom weights to enable fine-tuned inference)

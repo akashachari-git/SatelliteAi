@@ -42,14 +42,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
               SatQuery <span className="text-cyan-400">AI</span>
             </h1>
             <p className="text-xl sm:text-2xl text-slate-300 font-medium leading-relaxed">
-              “Understand your satellite imagery with AI.”
+              Ask questions about satellite imagery using natural language.
             </p>
           </div>
 
           {/* Simple Explanation */}
           <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            SatQuery AI transforms complex satellite and aerial imagery into clear, plain-language answers.
-            Ask questions, detect environmental changes across time, and fuse optical and radar data in seconds.
+            SatQuery AI enables natural-language analysis across single satellite images, past vs present imagery, and cross-modal optical + SAR radar imagery with verifiable evidence grounding.
           </p>
 
           {/* Primary Action Button */}
@@ -60,7 +59,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-base shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:shadow-[0_0_35px_rgba(6,182,212,0.5)] transition-all flex items-center justify-center gap-3 cursor-pointer group"
             >
               <Upload className="w-5 h-5 text-slate-950 group-hover:-translate-y-0.5 transition-transform" />
-              <span>Add Satellite Images</span>
+              <span>Start Analysis</span>
               <ArrowRight className="w-5 h-5 text-slate-950 group-hover:translate-x-1 transition-transform" />
             </button>
 

@@ -286,5 +286,2102 @@
       }
     ],
     "errorInfo": null
+  },
+  {
+    "id": "sq-job-20260912-e0b96c",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T13:48:47.852Z",
+    "startedAt": "2026-09-12T13:48:46.297Z",
+    "completedAt": "2026-09-12T13:48:47.852Z",
+    "durationMs": 1555,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "Describe the land cover and find water bodies",
+    "inputType": "single",
+    "inputSummary": "single Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Optical Multispectral",
+    "selectedTask": "text-guided-grounding",
+    "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+    "response": {
+      "answer": "Analysis encountered an error: Could not load image from source: iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA7klEQVR4nO3SMRGAQBAEwXskoR0RyMLC...",
+      "whyThisAnswer": "Execution error: Could not load image from source: iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA7klEQVR4nO3SMRGAQBAEwXskoR0RyMLC...",
+      "isSimulation": false
+    },
+    "confidence": null,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Execution error: Could not load image from source:",
+        "confidence": null
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"Describe the land cover and find water bodies\"",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 1484,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:18:47 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:18:47 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-e0b96c",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T13:48:47.853Z",
+      "reproducibleSeed": "SAT-SEED-MTYFXZL9"
+    },
+    "resultPayload": {
+      "query": "Describe the land cover and find water bodies",
+      "mode": "single",
+      "taskType": "text-guided-grounding",
+      "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+      "answer": "Analysis encountered an error: Could not load image from source: iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA7klEQVR4nO3SMRGAQBAEwXskoR0RyMLC...",
+      "whyThisAnswer": "Execution error: Could not load image from source: iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA7klEQVR4nO3SMRGAQBAEwXskoR0RyMLC...",
+      "confidence": null,
+      "evidence": [
+        "Execution error: Could not load image from source: iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA7klEQVR4nO3SMRGAQBAEwXskoR0RyMLC..."
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [],
+      "spatialEvidenceAvailable": false,
+      "groundingStatus": "SCENE_LEVEL_ONLY",
+      "evidenceNote": "Target not present in raster extents.",
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"Describe the land cover and find water bodies\"",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 1484,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:18:47 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:18:47 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Optical Multispectral",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "grounding",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-e17ebe",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T13:49:38.366Z",
+    "startedAt": "2026-09-12T13:49:37.240Z",
+    "completedAt": "2026-09-12T13:49:38.366Z",
+    "durationMs": 1126,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "Describe the land cover and find water bodies",
+    "inputType": "single",
+    "inputSummary": "single Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Optical Multispectral",
+    "selectedTask": "text-guided-grounding",
+    "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+    "response": {
+      "answer": "Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.",
+      "whyThisAnswer": "Image verification check failed: Extremely low color palette variance (< 32 colors) indicates synthetic illustration or line drawing.",
+      "isSimulation": false
+    },
+    "confidence": null,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Image verification check failed: Extremely low col",
+        "confidence": null
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"Describe the land cover and find water bodies\"",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 1125,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:19:38 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:19:38 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-e17ebe",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T13:49:38.366Z",
+      "reproducibleSeed": "SAT-SEED-MTYFZ2KE"
+    },
+    "resultPayload": {
+      "query": "Describe the land cover and find water bodies",
+      "mode": "single",
+      "taskType": "text-guided-grounding",
+      "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+      "answer": "Unable to verify this as satellite/remote-sensing imagery. Please upload a valid satellite image.",
+      "whyThisAnswer": "Image verification check failed: Extremely low color palette variance (< 32 colors) indicates synthetic illustration or line drawing.",
+      "confidence": null,
+      "evidence": [
+        "Image verification check failed: Extremely low color palette variance (< 32 colors) indicates synthetic illustration or line drawing."
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [],
+      "spatialEvidenceAvailable": false,
+      "groundingStatus": "SCENE_LEVEL_ONLY",
+      "evidenceNote": "Target not present in raster extents.",
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"Describe the land cover and find water bodies\"",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 1125,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:19:38 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:19:38 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Optical Multispectral",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "grounding",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-e226e2",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T13:50:21.411Z",
+    "startedAt": "2026-09-12T13:50:20.130Z",
+    "completedAt": "2026-09-12T13:50:21.411Z",
+    "durationMs": 1281,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "Locate water bodies and describe vegetation",
+    "inputType": "single",
+    "inputSummary": "single Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Optical Multispectral",
+    "selectedTask": "text-guided-grounding",
+    "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+    "response": {
+      "answer": "Surface water bodies are detected across approximately 61.7% of the scene. Localized 1 distinct water extent(s) with characteristic low NIR reflectance.",
+      "whyThisAnswer": "Normalized Difference Water Index (NDWI proxy) isolated 61.7% contiguous water surface.; Localized 1 candidate bounding region(s) with high contrast boundaries.",
+      "isSimulation": false
+    },
+    "confidence": 96.2,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Normalized Difference Water Index (NDWI proxy) iso",
+        "confidence": 96.2
+      },
+      {
+        "id": "ev-ref-2",
+        "type": "Spatial Point & Extents",
+        "label": "Localized 1 candidate bounding region(s) with high",
+        "confidence": 96.2
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"Locate water bodies and describe vegetation\"",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 1280,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:20:21 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:20:21 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-e226e2",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T13:50:21.411Z",
+      "reproducibleSeed": "SAT-SEED-MTYFZZS3"
+    },
+    "resultPayload": {
+      "query": "Locate water bodies and describe vegetation",
+      "mode": "single",
+      "taskType": "text-guided-grounding",
+      "selectedModel": "RS-Grounder-DETR with Linguistic Cross-Modulation",
+      "answer": "Surface water bodies are detected across approximately 61.7% of the scene. Localized 1 distinct water extent(s) with characteristic low NIR reflectance.",
+      "whyThisAnswer": "Normalized Difference Water Index (NDWI proxy) isolated 61.7% contiguous water surface.; Localized 1 candidate bounding region(s) with high contrast boundaries.",
+      "confidence": 96.2,
+      "evidence": [
+        "Normalized Difference Water Index (NDWI proxy) isolated 61.7% contiguous water surface.",
+        "Localized 1 candidate bounding region(s) with high contrast boundaries."
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [
+        {
+          "id": "box-1",
+          "label": "Water Body",
+          "x": 0.4,
+          "y": 40.6,
+          "width": 99.2,
+          "height": 59,
+          "color": "#06b6d4",
+          "confidence": 98.5,
+          "description": "Water Body parcel occupying approximately 58.5% of scene area."
+        }
+      ],
+      "spatialEvidenceAvailable": true,
+      "groundingStatus": "TARGET_FOUND",
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "detectedFeatures": [
+        {
+          "name": "Water bodies",
+          "status": "Detected",
+          "extent": "61.7% surface area",
+          "coverage": "61.7% surface area",
+          "description": "Continuous surface water absorption verified across red/NIR bands.",
+          "confidence": 95
+        },
+        {
+          "name": "Vegetation / forest",
+          "status": "Detected",
+          "extent": "46.9% surface area",
+          "coverage": "46.9% surface area",
+          "description": "Active chlorophyll canopy reflectance confirmed via Green-Red spectral distribution.",
+          "confidence": 94
+        },
+        {
+          "name": "Buildings / built-up areas",
+          "status": "Not Present in Scene",
+          "extent": "0.0% surface area",
+          "coverage": "0.0% surface area",
+          "description": "No dense built-up clusters identified.",
+          "confidence": null
+        },
+        {
+          "name": "Roads",
+          "status": "Not Present in Scene",
+          "extent": "0.0% network density",
+          "coverage": "0.0% surface area",
+          "description": "No distinct linear road networks resolved.",
+          "confidence": null
+        },
+        {
+          "name": "Agricultural areas",
+          "status": "Detected",
+          "extent": "13.5% surface area",
+          "coverage": "13.5% surface area",
+          "description": "Regular geometric parcel boundaries with cultivated vegetative response.",
+          "confidence": 91
+        },
+        {
+          "name": "Bare / open land",
+          "status": "Not Present in Scene",
+          "extent": "0.0% surface area",
+          "coverage": "0.0% surface area",
+          "description": "No major barren land parcels detected.",
+          "confidence": null
+        }
+      ],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"Locate water bodies and describe vegetation\"",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as TEXT GUIDED-GROUNDING (Confidence: 99.1%).",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to RS-Grounder-DETR with Linguistic Cross-Modulation.",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 1280,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:20:21 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:20:21 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Optical Multispectral",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "grounding",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-f36be3",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T14:09:13.187Z",
+    "startedAt": "2026-09-12T14:09:11.793Z",
+    "completedAt": "2026-09-12T14:09:13.187Z",
+    "durationMs": 1394,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "What changed between these two dates and where did the change occur?",
+    "inputType": "bi-temporal",
+    "inputSummary": "bi-temporal Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Bi-temporal Optical",
+    "selectedTask": "change-analysis",
+    "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+    "response": {
+      "answer": "Analysis encountered an error: Empty image source provided",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "isSimulation": false
+    },
+    "confidence": 91.5,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Execution error: Empty image source provided",
+        "confidence": 91.5
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 1394,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:39:13 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:39:13 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-f36be3",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T14:09:13.187Z",
+      "reproducibleSeed": "SAT-SEED-MTYGO92B"
+    },
+    "resultPayload": {
+      "query": "What changed between these two dates and where did the change occur?",
+      "mode": "bi-temporal",
+      "taskType": "change-analysis",
+      "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+      "answer": "Analysis encountered an error: Empty image source provided",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "confidence": 91.5,
+      "evidence": [
+        "Execution error: Empty image source provided"
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [],
+      "spatialEvidenceAvailable": false,
+      "groundingStatus": "SCENE_LEVEL_ONLY",
+      "evidenceNote": "Target not present in raster extents.",
+      "changeMetric": {
+        "netChangePercentage": 0,
+        "primaryClass": "Land Cover Dynamics",
+        "changeRegionsCount": 0
+      },
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 1394,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:39:13 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:39:13 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Bi-temporal Optical",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "change",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-f5be78",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T14:11:45.400Z",
+    "startedAt": "2026-09-12T14:11:44.669Z",
+    "completedAt": "2026-09-12T14:11:45.400Z",
+    "durationMs": 731,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "What changed between these two dates and where did the change occur?",
+    "inputType": "bi-temporal",
+    "inputSummary": "bi-temporal Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Bi-temporal Optical",
+    "selectedTask": "change-analysis",
+    "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+    "response": {
+      "answer": "Analysis encountered an error: Empty image source provided",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "isSimulation": false
+    },
+    "confidence": 91.5,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Execution error: Empty image source provided",
+        "confidence": 91.5
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 730,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:41:45 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:41:45 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-f5be78",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T14:11:45.400Z",
+      "reproducibleSeed": "SAT-SEED-MTYGRIIG"
+    },
+    "resultPayload": {
+      "query": "What changed between these two dates and where did the change occur?",
+      "mode": "bi-temporal",
+      "taskType": "change-analysis",
+      "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+      "answer": "Analysis encountered an error: Empty image source provided",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "confidence": 91.5,
+      "evidence": [
+        "Execution error: Empty image source provided"
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [],
+      "spatialEvidenceAvailable": false,
+      "groundingStatus": "SCENE_LEVEL_ONLY",
+      "evidenceNote": "Target not present in raster extents.",
+      "changeMetric": {
+        "netChangePercentage": 0,
+        "primaryClass": "Land Cover Dynamics",
+        "changeRegionsCount": 0
+      },
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 730,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:41:45 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:41:45 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Bi-temporal Optical",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "change",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-f97fef",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T14:15:51.535Z",
+    "startedAt": "2026-09-12T14:15:50.732Z",
+    "completedAt": "2026-09-12T14:15:51.535Z",
+    "durationMs": 803,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "What changed between these two dates and where did the change occur?",
+    "inputType": "bi-temporal",
+    "inputSummary": "bi-temporal Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Bi-temporal Optical",
+    "selectedTask": "change-analysis",
+    "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+    "response": {
+      "answer": "Analysis encountered an error: name 'data' is not defined",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "isSimulation": false
+    },
+    "confidence": 91.5,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Execution error: name 'data' is not defined",
+        "confidence": 91.5
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 778,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:45:51 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:45:51 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-f97fef",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T14:15:51.535Z",
+      "reproducibleSeed": "SAT-SEED-MTYGWSFJ"
+    },
+    "resultPayload": {
+      "query": "What changed between these two dates and where did the change occur?",
+      "mode": "bi-temporal",
+      "taskType": "change-analysis",
+      "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+      "answer": "Analysis encountered an error: name 'data' is not defined",
+      "whyThisAnswer": "Multi-date raster subtraction and spectral delta evaluation across T1 and T2.",
+      "confidence": 91.5,
+      "evidence": [
+        "Execution error: name 'data' is not defined"
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [],
+      "spatialEvidenceAvailable": false,
+      "groundingStatus": "SCENE_LEVEL_ONLY",
+      "evidenceNote": "Target not present in raster extents.",
+      "changeMetric": {
+        "netChangePercentage": 0,
+        "primaryClass": "Land Cover Dynamics",
+        "changeRegionsCount": 0
+      },
+      "changedRegions": [],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 778,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:45:51 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:45:51 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Bi-temporal Optical",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "change",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-f9d09f",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T14:16:12.191Z",
+    "startedAt": "2026-09-12T14:16:11.035Z",
+    "completedAt": "2026-09-12T14:16:12.191Z",
+    "durationMs": 1156,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "What changed between these two dates and where did the change occur?",
+    "inputType": "bi-temporal",
+    "inputSummary": "bi-temporal Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Bi-temporal Optical",
+    "selectedTask": "change-analysis",
+    "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+    "response": {
+      "answer": "Vegetation cover has DECREASED by 13.2%, indicating tree canopy removal or land clearing.",
+      "whyThisAnswer": "Vegetation cover has DECREASED by 13.2%, indicating tree canopy removal or land clearing.",
+      "isSimulation": false
+    },
+    "confidence": 95.2,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Bi-temporal differencing detected 15.3% net surfac",
+        "confidence": 95.2
+      },
+      {
+        "id": "ev-ref-2",
+        "type": "Spatial Point & Extents",
+        "label": "Land cover delta: Vegetation -13.2%, Built-Up +1.4",
+        "confidence": 95.2
+      },
+      {
+        "id": "ev-ref-3",
+        "type": "Spatial Point & Extents",
+        "label": "Localized 1 distinct change bounding cluster(s) ex",
+        "confidence": 95.2
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 1156,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:46:12 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:46:12 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-f9d09f",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T14:16:12.191Z",
+      "reproducibleSeed": "SAT-SEED-MTYGX8DB"
+    },
+    "resultPayload": {
+      "query": "What changed between these two dates and where did the change occur?",
+      "mode": "bi-temporal",
+      "taskType": "change-analysis",
+      "selectedModel": "ChangeFormer-V2 (Siamese Difference Engine)",
+      "answer": "Vegetation cover has DECREASED by 13.2%, indicating tree canopy removal or land clearing.",
+      "whyThisAnswer": "Vegetation cover has DECREASED by 13.2%, indicating tree canopy removal or land clearing.",
+      "confidence": 95.2,
+      "evidence": [
+        "Bi-temporal differencing detected 15.3% net surface change across co-registered rasters.",
+        "Land cover delta: Vegetation -13.2%, Built-Up +1.4%, Water +2.1%.",
+        "Localized 1 distinct change bounding cluster(s) exceeding sensor noise floor."
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 Multispectral",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [
+        {
+          "id": "chg-1",
+          "label": "Change Region (Decreased)",
+          "x": 38.9,
+          "y": 38.9,
+          "width": 39.5,
+          "height": 39.5,
+          "color": "#ef4444",
+          "confidence": 97,
+          "description": "Verified change patch (Vegetation Loss / Clearing) covering 15.6% area."
+        }
+      ],
+      "spatialEvidenceAvailable": true,
+      "groundingStatus": "TARGET_FOUND",
+      "changeMetric": {
+        "increasedAreaKm2": 0.14,
+        "decreasedAreaKm2": 1.32,
+        "netChangePercentage": 15.3,
+        "primaryClass": "Vegetation Loss / Clearing",
+        "changeRegionsCount": 1
+      },
+      "changedRegions": [
+        {
+          "id": "reg-1",
+          "label": "Changed Sector 1",
+          "category": "Vegetation Loss / Clearing",
+          "direction": "Decreased",
+          "coordinates": "Center X:58.6%, Y:58.6%",
+          "areaKm2": 1.56,
+          "x": 38.9,
+          "y": 38.9,
+          "width": 39.5,
+          "height": 39.5,
+          "confidence": 97,
+          "spectralShift": "Pixel difference magnitude 101.2 DN"
+        }
+      ],
+      "multimodalRegions": [],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"What changed between these two dates and where did the change occur?\"",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as CHANGE ANALYSIS (Confidence: 99.1%).",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to ChangeFormer-V2 (Siamese Difference Engine).",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 1156,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:46:12 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:46:12 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Bi-temporal Optical",
+        "sensor": "Sentinel-2B MSI"
+      },
+      "imageOverlayType": "change",
+      "isSimulation": false
+    }
+  },
+  {
+    "id": "sq-job-20260912-fb54d2",
+    "userId": "ajayreddy9164@gmail.com",
+    "createdAt": "2026-09-12T14:17:51.570Z",
+    "startedAt": "2026-09-12T14:17:50.801Z",
+    "completedAt": "2026-09-12T14:17:51.570Z",
+    "durationMs": 769,
+    "status": "COMPLETED",
+    "progress": 100,
+    "currentStep": "Intelligence Dossier Compiled",
+    "query": "Use optical and SAR images together to identify built-up and water-covered regions.",
+    "inputType": "optical-sar",
+    "inputSummary": "optical-sar Satellite Raster",
+    "uploadedFileIds": [
+      "raster-file-01"
+    ],
+    "uploadedFilesMetadata": [],
+    "detectedModality": "Optical + SAR",
+    "selectedTask": "optical-sar-analysis",
+    "selectedModel": "CrossSens-Fusion (Optical-SAR Cross-Modal Specialist)",
+    "response": {
+      "answer": "Joint synthesis of Optical multispectral imagery and SAR microwave radar backscatter provides cross-sensor corroboration: \n1. Built-Up Structures: Optical high edge gradients are corroborated by intense SAR double-bounce dihedral corner reflections (2.2% joint area). \n2. Water Extent: Optical near-infrared photon absorption is corroborated by total SAR specular forward scattering extinction (2.6% joint area). \n3. Complementary Advantage: SAR confirms physical surface roughness and vertical elevation facades while Optical delivers material spectral discrimination.",
+      "whyThisAnswer": "Optical provides spectral material reflectance; SAR provides physical structure, roughness, dielectric properties, and all-weather cloud penetration.",
+      "isSimulation": false
+    },
+    "confidence": 96.8,
+    "evidenceReferences": [
+      {
+        "id": "ev-ref-1",
+        "type": "Spatial Point & Extents",
+        "label": "Optical multispectral analysis identified 63.2% bu",
+        "confidence": 96.8
+      },
+      {
+        "id": "ev-ref-2",
+        "type": "Spatial Point & Extents",
+        "label": "Vegetation canopy mapped at 3.3% surface coverage ",
+        "confidence": 96.8
+      },
+      {
+        "id": "ev-ref-3",
+        "type": "Spatial Point & Extents",
+        "label": "SAR microwave intensity identified 3.8% dihedral c",
+        "confidence": 96.8
+      },
+      {
+        "id": "ev-ref-4",
+        "type": "Spatial Point & Extents",
+        "label": "SAR specular reflection extinction identified 39.1",
+        "confidence": 96.8
+      },
+      {
+        "id": "ev-ref-5",
+        "type": "Spatial Point & Extents",
+        "label": "Cross-modal fusion corroborated 2.2% built-up stru",
+        "confidence": 96.8
+      },
+      {
+        "id": "ev-ref-6",
+        "type": "Spatial Point & Extents",
+        "label": "SAR microwave pulses confirm structural geometry i",
+        "confidence": 96.8
+      }
+    ],
+    "executionTrace": [
+      {
+        "id": "step-1",
+        "stepNumber": 1,
+        "title": "Query received",
+        "status": "completed",
+        "durationMs": 14,
+        "summary": "Registered query: \"Use optical and SAR images together to identify built-up and water-covered regions.\"",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-2",
+        "stepNumber": 2,
+        "title": "Input validation",
+        "status": "completed",
+        "durationMs": 42,
+        "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-3",
+        "stepNumber": 3,
+        "title": "Task classification",
+        "status": "completed",
+        "durationMs": 38,
+        "summary": "Classified as OPTICAL SAR-ANALYSIS (Confidence: 99.1%).",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-4",
+        "stepNumber": 4,
+        "title": "Input compatibility check",
+        "status": "completed",
+        "durationMs": 20,
+        "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-5",
+        "stepNumber": 5,
+        "title": "Specialist model selected",
+        "status": "completed",
+        "durationMs": 28,
+        "summary": "Dispatched to CrossSens-Fusion (Optical-SAR Cross-Modal Specialist).",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-6",
+        "stepNumber": 6,
+        "title": "Model execution",
+        "status": "completed",
+        "durationMs": 769,
+        "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-7",
+        "stepNumber": 7,
+        "title": "Evidence extraction",
+        "status": "completed",
+        "durationMs": 65,
+        "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+        "timestamp": "7:47:51 pm"
+      },
+      {
+        "id": "step-8",
+        "stepNumber": 8,
+        "title": "Response generation",
+        "status": "completed",
+        "durationMs": 35,
+        "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+        "timestamp": "7:47:51 pm"
+      }
+    ],
+    "errorInfo": null,
+    "reportDossier": {
+      "dossierId": "dos-2-fb54d2",
+      "format": "JSON / OGC-GeoJSON",
+      "generatedAt": "2026-09-12T14:17:51.570Z",
+      "reproducibleSeed": "SAT-SEED-MTYGZD1U"
+    },
+    "resultPayload": {
+      "query": "Use optical and SAR images together to identify built-up and water-covered regions.",
+      "mode": "optical-sar",
+      "taskType": "optical-sar-analysis",
+      "selectedModel": "CrossSens-Fusion (Optical-SAR Cross-Modal Specialist)",
+      "answer": "Joint synthesis of Optical multispectral imagery and SAR microwave radar backscatter provides cross-sensor corroboration: \n1. Built-Up Structures: Optical high edge gradients are corroborated by intense SAR double-bounce dihedral corner reflections (2.2% joint area). \n2. Water Extent: Optical near-infrared photon absorption is corroborated by total SAR specular forward scattering extinction (2.6% joint area). \n3. Complementary Advantage: SAR confirms physical surface roughness and vertical elevation facades while Optical delivers material spectral discrimination.",
+      "whyThisAnswer": "Optical provides spectral material reflectance; SAR provides physical structure, roughness, dielectric properties, and all-weather cloud penetration.",
+      "confidence": 96.8,
+      "evidence": [
+        "Optical multispectral analysis identified 63.2% built-up area and 7.3% water surface.",
+        "Vegetation canopy mapped at 3.3% surface coverage via visible chlorophyll response.",
+        "SAR microwave intensity identified 3.8% dihedral corner reflectors (vertical architectural structures).",
+        "SAR specular reflection extinction identified 39.1% smooth microwave mirror surfaces (open water).",
+        "Cross-modal fusion corroborated 2.2% built-up structures and 2.6% water extent across both modalities.",
+        "SAR microwave pulses confirm structural geometry independently of solar illumination angle or optical cloud shadow."
+      ],
+      "geospatialMetadata": {
+        "crs": "EPSG:32643",
+        "gsd": "0.5 m/px",
+        "sensor": "Sentinel-2 MSI + Sentinel-1 C-SAR",
+        "bounds": [
+          72.82,
+          18.94,
+          72.86,
+          18.98
+        ]
+      },
+      "boundingBoxes": [
+        {
+          "id": "fus-1",
+          "label": "Built-Up Zone (Optical + SAR Double Bounce)",
+          "x": 58.6,
+          "y": 58.6,
+          "width": 19.5,
+          "height": 19.5,
+          "color": "#f59e0b",
+          "confidence": 97.4,
+          "description": "Corroborated by high optical edge density and SAR microwave dihedral double-bounce reflections."
+        },
+        {
+          "id": "fus-2",
+          "label": "Built-Up Zone (Optical + SAR Double Bounce)",
+          "x": 77.3,
+          "y": 58.6,
+          "width": 0.8,
+          "height": 0.4,
+          "color": "#f59e0b",
+          "confidence": 97.4,
+          "description": "Corroborated by high optical edge density and SAR microwave dihedral double-bounce reflections."
+        },
+        {
+          "id": "fus-3",
+          "label": "Water Surface (Optical Absorption + SAR Specular Extinction)",
+          "x": 1.4,
+          "y": 0.4,
+          "width": 0.8,
+          "height": 2.7,
+          "color": "#06b6d4",
+          "confidence": 98.2,
+          "description": "Corroborated by optical NIR absorption and SAR zero-backscatter forward specular scattering."
+        },
+        {
+          "id": "fus-4",
+          "label": "Water Surface (Optical Absorption + SAR Specular Extinction)",
+          "x": 5.3,
+          "y": 0.4,
+          "width": 0.6,
+          "height": 0.2,
+          "color": "#06b6d4",
+          "confidence": 98.2,
+          "description": "Corroborated by optical NIR absorption and SAR zero-backscatter forward specular scattering."
+        }
+      ],
+      "spatialEvidenceAvailable": true,
+      "groundingStatus": "TARGET_FOUND",
+      "changedRegions": [],
+      "crossModalEvidence": {
+        "opticalEvidence": [
+          "Optical multispectral analysis identified 63.2% built-up area and 7.3% water surface.",
+          "Vegetation canopy mapped at 3.3% surface coverage via visible chlorophyll response."
+        ],
+        "sarEvidence": [
+          "SAR microwave intensity identified 3.8% dihedral corner reflectors (vertical architectural structures).",
+          "SAR specular reflection extinction identified 39.1% smooth microwave mirror surfaces (open water)."
+        ],
+        "fusedEvidence": [
+          "Cross-modal fusion corroborated 2.2% built-up structures and 2.6% water extent across both modalities.",
+          "SAR microwave pulses confirm structural geometry independently of solar illumination angle or optical cloud shadow."
+        ],
+        "corroboratingFeatures": [
+          "Built-up infrastructure corroborated by optical NDBI proxy and SAR double-bounce (2.2% area).",
+          "Water bodies corroborated by optical NIR absorption and SAR specular extinction (2.6% area)."
+        ],
+        "sensorComplementarityNotes": "Optical provides spectral material reflectance; SAR provides physical structure, roughness, dielectric properties, and all-weather cloud penetration."
+      },
+      "multimodalRegions": [
+        {
+          "id": "fus-1",
+          "label": "Built-Up Zone (Optical + SAR Double Bounce)",
+          "x": 58.6,
+          "y": 58.6,
+          "width": 19.5,
+          "height": 19.5,
+          "color": "#f59e0b",
+          "confidence": 97.4,
+          "description": "Corroborated by high optical edge density and SAR microwave dihedral double-bounce reflections."
+        },
+        {
+          "id": "fus-2",
+          "label": "Built-Up Zone (Optical + SAR Double Bounce)",
+          "x": 77.3,
+          "y": 58.6,
+          "width": 0.8,
+          "height": 0.4,
+          "color": "#f59e0b",
+          "confidence": 97.4,
+          "description": "Corroborated by high optical edge density and SAR microwave dihedral double-bounce reflections."
+        },
+        {
+          "id": "fus-3",
+          "label": "Water Surface (Optical Absorption + SAR Specular Extinction)",
+          "x": 1.4,
+          "y": 0.4,
+          "width": 0.8,
+          "height": 2.7,
+          "color": "#06b6d4",
+          "confidence": 98.2,
+          "description": "Corroborated by optical NIR absorption and SAR zero-backscatter forward specular scattering."
+        },
+        {
+          "id": "fus-4",
+          "label": "Water Surface (Optical Absorption + SAR Specular Extinction)",
+          "x": 5.3,
+          "y": 0.4,
+          "width": 0.6,
+          "height": 0.2,
+          "color": "#06b6d4",
+          "confidence": 98.2,
+          "description": "Corroborated by optical NIR absorption and SAR zero-backscatter forward specular scattering."
+        }
+      ],
+      "executionSteps": [
+        {
+          "id": "step-1",
+          "stepNumber": 1,
+          "title": "Query received",
+          "status": "completed",
+          "durationMs": 14,
+          "summary": "Registered query: \"Use optical and SAR images together to identify built-up and water-covered regions.\"",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-2",
+          "stepNumber": 2,
+          "title": "Input validation",
+          "status": "completed",
+          "durationMs": 42,
+          "summary": "Raster files verified for satellite telemetry, remote sensing spectral characteristics, and header integrity.",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-3",
+          "stepNumber": 3,
+          "title": "Task classification",
+          "status": "completed",
+          "durationMs": 38,
+          "summary": "Classified as OPTICAL SAR-ANALYSIS (Confidence: 99.1%).",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-4",
+          "stepNumber": 4,
+          "title": "Input compatibility check",
+          "status": "completed",
+          "durationMs": 20,
+          "summary": "Input modalities, raster dimensions, and spectral bands confirmed compatible.",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-5",
+          "stepNumber": 5,
+          "title": "Specialist model selected",
+          "status": "completed",
+          "durationMs": 28,
+          "summary": "Dispatched to CrossSens-Fusion (Optical-SAR Cross-Modal Specialist).",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-6",
+          "stepNumber": 6,
+          "title": "Model execution",
+          "status": "completed",
+          "durationMs": 769,
+          "summary": "Inference executed via local spectral feature extraction and computer vision tensor runtime.",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-7",
+          "stepNumber": 7,
+          "title": "Evidence extraction",
+          "status": "completed",
+          "durationMs": 65,
+          "summary": "Extracted spatial bounding bounds, spectral indices, and calibrated certainty.",
+          "timestamp": "7:47:51 pm"
+        },
+        {
+          "id": "step-8",
+          "stepNumber": 8,
+          "title": "Response generation",
+          "status": "completed",
+          "durationMs": 35,
+          "summary": "Structured intelligence dossier and georeferenced overlay compiled.",
+          "timestamp": "7:47:51 pm"
+        }
+      ],
+      "imageryMetadata": {
+        "coordinates": "18°57'41\" N, 72°50'15\" E",
+        "resolution": "0.5 m/px GSD",
+        "dimensions": "2048 × 2048 px",
+        "modality": "Optical + SAR",
+        "sensor": "CartoSat-3 MX + RISAT-1A"
+      },
+      "imageOverlayType": "fusion",
+      "isSimulation": false
+    }
   }
 ]

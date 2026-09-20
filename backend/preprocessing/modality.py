@@ -48,7 +48,7 @@ class OpticalPreprocessor:
         Executes optical calibration and spectral feature preparation.
         """
         gsd = metadata.get("gsd", "10.0m") if metadata else "10.0m"
-        crs = metadata.get("crs", "EPSG:32643") if metadata else "EPSG:32643"
+        crs = metadata.get("crs") if metadata else None
 
         return {
             "modality": "Optical",

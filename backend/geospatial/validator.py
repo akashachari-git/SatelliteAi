@@ -9,8 +9,14 @@ import os
 import re
 from typing import Dict, Any, Tuple, Optional, List
 from ..schemas import GeoTIFFMetadata
+from .raster_cache import raster_cache
 
 SUPPORTED_EXTENSIONS = {".tif", ".tiff", ".geotiff", ".png", ".jpg", ".jpeg"}
+
+# Configurable safety limits to prevent memory exhaustion
+MAX_FILE_SIZE_BYTES = int(os.environ.get("SATQUERY_MAX_FILE_SIZE_BYTES", 250 * 1024 * 1024))  # 250 MB
+MAX_RASTER_DIM = int(os.environ.get("SATQUERY_MAX_RASTER_DIM", 8192))                          # 8192 px
+MAX_BANDS = int(os.environ.get("SATQUERY_MAX_BANDS", 32))                                     # 32 bands
 
 class GeoTIFFValidator:
     """
@@ -35,21 +41,52 @@ class GeoTIFFValidator:
         mode: str = "single"
     ) -> GeoTIFFMetadata:
         """
-        Extracts comprehensive geospatial metadata from raster inputs.
-        Tries rasterio/gdal if available, with intelligent fallback.
+        Extracts comprehensive geospatial metadata from raster inputs with bounded caching.
+        Enforces safety limits on dimensions, file size, and band count.
         """
+        # 1. Check bounded metadata cache first
+        cached_meta = raster_cache.get_metadata(filename, role=role, mode=mode)
+        if cached_meta is not None:
+            return cached_meta
+
         ext = os.path.splitext(filename.lower())[1]
         is_geotiff = ext in [".tif", ".tiff", ".geotiff"]
 
-        # Default standard geospatial values (calibrated for SIH Mumbai & Sentinel-2/1 targets)
+        # Check file size limit
+        actual_size = file_size_bytes
+        if actual_size == 0 and os.path.exists(filename) and os.path.isfile(filename):
+            actual_size = os.path.getsize(filename)
+
+        if actual_size > MAX_FILE_SIZE_BYTES:
+            return GeoTIFFMetadata(
+                filename=filename,
+                format=ext.replace(".", "").upper() or "TIFF",
+                width=0,
+                height=0,
+                bands=0,
+                crs="Unknown",
+                geotransform=None,
+                resolution="Unknown",
+                bounds=None,
+                datatype="unknown",
+                modality="Oversized",
+                sensor="Unknown",
+                isValid=False,
+                validationMessage=(
+                    f"Resource Safety Violation: Raster file size ({actual_size / (1024 * 1024):.1f} MB) "
+                    f"exceeds maximum allowed limit of {MAX_FILE_SIZE_BYTES / (1024 * 1024):.0f} MB."
+                )
+            )
+
+        # Default unprojected metadata (no fabricated coordinates or CRS)
         width = 1024
         height = 1024
         bands = 3
-        crs = "EPSG:32643 (WGS 84 / UTM zone 43N)" if is_geotiff else "Local Pixel CRS (Unprojected)"
-        geotransform = [281000.0, 10.0, 0.0, 2102000.0, 0.0, -10.0]
-        resolution = "10.0m GSD (Sentinel-2 VNIR)"
+        crs = None
+        geotransform = None
+        resolution = None
         datatype = "uint16" if is_geotiff else "uint8"
-        bounds = {"minX": 72.8255, "minY": 18.9733, "maxX": 72.8550, "maxY": 19.0020}
+        bounds = None
 
         # Modality detection heuristics
         name_lower = filename.lower()
@@ -57,67 +94,108 @@ class GeoTIFFValidator:
             modality = "SAR (Sentinel-1 C-Band VV/VH)"
             sensor = "Sentinel-1 CSAR Synthetic Aperture Radar"
             bands = 2
-            resolution = "10.0m GSD Ground Range Detected"
             datatype = "float32"
         elif "bitemp" in name_lower or "t1" in name_lower or "before" in name_lower:
             modality = "Optical Multispectral (T1 Baseline)"
             sensor = "Sentinel-2 MSI (MultiSpectral Instrument)"
             bands = 4
-            resolution = "10.0m VNIR GSD"
         elif "after" in name_lower or "t2" in name_lower:
             modality = "Optical Multispectral (T2 Monitoring)"
             sensor = "Sentinel-2 MSI (MultiSpectral Instrument)"
             bands = 4
-            resolution = "10.0m VNIR GSD"
         elif "nir" in name_lower or "multispectral" in name_lower:
             modality = "Multispectral (12-Band MSI)"
             sensor = "Sentinel-2 MSI (13 Spectral Bands)"
             bands = 12
-            resolution = "10.0m - 20.0m GSD"
         else:
             modality = "Optical RGB (High-Resolution)"
             sensor = "Airborne / Spaceborne Multispectral Orthomosaic"
             bands = 3
-            resolution = "0.5m - 2.0m High-Res GSD"
 
-        # Attempt real rasterio inspection if file exists on disk
+        # Attempt real geospatial inspection if file exists on disk
         if os.path.exists(filename) and os.path.isfile(filename):
             try:
-                import rasterio
-                with rasterio.open(filename) as src:
-                    width = src.width
-                    height = src.height
-                    bands = src.count
-                    if src.crs:
-                        crs = f"{src.crs.to_string()} ({src.crs.to_epsg() or 'Projected'})"
-                    if src.transform:
-                        geotransform = [
-                            src.transform.c, src.transform.a, src.transform.b,
-                            src.transform.f, src.transform.d, src.transform.e
-                        ]
-                        resolution = f"{abs(src.transform.a):.1f}m GSD"
-                    datatype = str(src.dtypes[0])
-                    b = src.bounds
-                    bounds = {"minX": b.left, "minY": b.bottom, "maxX": b.right, "maxY": b.top}
+                from .georeference import GeoreferenceEngine
+                geo_meta = GeoreferenceEngine.extract_geospatial_metadata(filename)
+                if geo_meta.get("width"):
+                    width = geo_meta["width"]
+                if geo_meta.get("height"):
+                    height = geo_meta["height"]
+                crs = geo_meta.get("crs")
+                geotransform = geo_meta.get("geotransform")
+                bounds = geo_meta.get("bounds")
+                resolution = geo_meta.get("resolution")
             except Exception:
-                pass  # Graceful fallback to parsed metadata
+                pass
 
-        return GeoTIFFMetadata(
+        # Check dimension limits
+        if width > MAX_RASTER_DIM or height > MAX_RASTER_DIM:
+            return GeoTIFFMetadata(
+                filename=filename,
+                format=ext.replace(".", "").upper() or "TIFF",
+                width=width,
+                height=height,
+                bands=bands,
+                crs=crs or "Local Pixel CRS (Unprojected)",
+                geotransform=geotransform,
+                resolution=resolution or "Unspecified Resolution",
+                bounds=bounds,
+                datatype=datatype,
+                modality=modality,
+                sensor=sensor,
+                isValid=False,
+                validationMessage=(
+                    f"Resource Safety Violation: Raster dimensions ({width}×{height} px) "
+                    f"exceed maximum allowed limit of {MAX_RASTER_DIM}×{MAX_RASTER_DIM} px."
+                )
+            )
+
+        if bands > MAX_BANDS:
+            return GeoTIFFMetadata(
+                filename=filename,
+                format=ext.replace(".", "").upper() or "TIFF",
+                width=width,
+                height=height,
+                bands=bands,
+                crs=crs or "Local Pixel CRS (Unprojected)",
+                geotransform=geotransform,
+                resolution=resolution or "Unspecified Resolution",
+                bounds=bounds,
+                datatype=datatype,
+                modality=modality,
+                sensor=sensor,
+                isValid=False,
+                validationMessage=(
+                    f"Resource Safety Violation: Raster band count ({bands}) "
+                    f"exceeds maximum allowed limit of {MAX_BANDS} bands."
+                )
+            )
+
+        val_msg = (
+            "Raster validated: Header parsed with valid spatial reference."
+            if crs and geotransform
+            else "Raster validated: Unprojected local pixel coordinates (georeferencing absent)."
+        )
+
+        result_meta = GeoTIFFMetadata(
             filename=filename,
             format=ext.replace(".", "").upper() or "TIFF",
             width=width,
             height=height,
             bands=bands,
-            crs=crs,
+            crs=crs or "Local Pixel CRS (Unprojected)",
             geotransform=geotransform,
-            resolution=resolution,
+            resolution=resolution or "Unspecified Resolution",
             bounds=bounds,
             datatype=datatype,
             modality=modality,
             sensor=sensor,
             isValid=True,
-            validationMessage="Raster validated: Header parsed with valid spatial reference."
+            validationMessage=val_msg
         )
+        # Store in bounded cache
+        raster_cache.set_metadata(filename, result_meta, role=role, mode=mode)
+        return result_meta
 
     @staticmethod
     def validate_single_mode(image_meta: Optional[GeoTIFFMetadata]) -> Tuple[bool, str]:

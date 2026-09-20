@@ -1,6 +1,6 @@
 """
 SatQuery AI - Specialist Remote-Sensing Vision-Language Model (RS-VLM)
-Satisfies SIH Problem Statement 26167: Single-Image Remote-Sensing Visual Question Answering (VQA).
+Single-Image Remote-Sensing Visual Question Answering (VQA).
 Designed specifically for remote-sensing imagery with domain terminology, LULC understanding,
 multimodal awareness (Optical vs SAR), and replaceable model layer.
 """
@@ -69,7 +69,7 @@ class RemoteSensingVLM(BaseRemoteSensingVLM):
         is_sar = "SAR" in modality or "Radar" in modality
         gsd = metadata.get("gsd", "0.5m - 10.0m")
         sensor = metadata.get("sensor", "High-Resolution Satellite Sensor")
-        crs = metadata.get("crs", "EPSG:32643")
+        crs = metadata.get("crs") or "Local Pixel CRS (Unprojected)"
         image_name = metadata.get("name", "remote_sensing_raster.tif")
 
         q_type = self.classify_question_type(query)

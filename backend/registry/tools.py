@@ -69,42 +69,40 @@ TOOL_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "bitemporal-diff-net": {
         "id": "bitemporal-diff-net",
-        "name": "ChangeFormer-V2",
+        "name": "Bi-Temporal Difference Specialist",
         "category": "Bi-Temporal Difference Modeling",
-        "architecture": "Siamese Vision Transformer with Temporal Difference Attention",
-        "modalities": ["Bi-Temporal Optical", "Bi-Temporal Multispectral"],
+        "architecture": "Normalized Spectral Differencing + Adaptive Thresholding + BigEarthNet Dual-State Prior",
+        "modalities": ["Bi-Temporal Optical RGB", "Bi-Temporal Sentinel-2 (10-Band)"],
         "supportedInputCount": 2,
         "supportedFormats": ["GeoTIFF", "TIFF", "PNG", "JPEG"],
-        "gsdRange": "0.5m – 30.0m",
-        "parameters": "512M",
-        "inputResolution": "Dual 512 × 512 px / 1024 × 1024 px",
-        "description": "Detects land-cover transitions, urban sprawl, vegetation loss, and water body shrinkage across dual timestamps with spatial difference masks and change quantification.",
-        "status": "Demo",
+        "gsdRange": "0.1m – 30.0m",
+        "parameters": "Classical CV + 11.2M (BigEarthNet Prior)",
+        "inputResolution": "Native / Multi-scale",
+        "description": "Evidence-grounded bi-temporal change analysis executing normalized spectral differencing, adaptive thresholding, morphological region extraction, and optional dual-state BigEarthNet land-cover shift analysis on local CPU.",
+        "status": "Connected",
         "supportedTasks": ["change-analysis", "change-based-vqa", "urban-sprawl-monitoring"],
         "parametersConfig": {
-            "changeSensitivity": 0.75,
             "minRegionSizePx": 16,
             "morphologicalClean": True,
         }
     },
     "optical-sar-fusion-net": {
         "id": "optical-sar-fusion-net",
-        "name": "CrossSens-Fusion",
-        "category": "Cross-Modal Fusion",
-        "architecture": "Dual-Stream Cross-Attention (ResNet-101 + U-Net SAR Backscatter Encoder)",
-        "modalities": ["Optical RGB", "SAR (Sentinel-1 C-Band VV/VH)"],
+        "name": "Optical + SAR Multimodal Fusion Specialist",
+        "category": "Cross-Modal Physical Fusion",
+        "architecture": "Cross-Modal Physical Corroboration (Multispectral Indices + Polarimetric Radar Backscatter Physics)",
+        "modalities": ["Optical RGB / Sentinel-2", "SAR (Sentinel-1 C-Band VV/VH)"],
         "supportedInputCount": 2,
         "supportedFormats": ["GeoTIFF", "TIFF", "PNG", "JPEG"],
         "gsdRange": "10.0m – 20.0m",
-        "parameters": "620M",
-        "inputResolution": "Paired 512 × 512 px",
-        "description": "Jointly processes optical reflectance and SAR dielectric/roughness backscatter to penetrate cloud cover and distinguish high-dielectric water bodies from double-bounce urban structures.",
+        "parameters": "Classical Multimodal Physics (No Learned Checkpoint)",
+        "inputResolution": "Native / Multi-scale",
+        "description": "Evidence-grounded cross-modal analysis executing optical spectral index derivation (NDVI, NDWI, NDBI), calibrated SAR backscatter thresholding (VV/VH, dB), and cross-sensor spatial corroboration.",
         "status": "Connected",
         "supportedTasks": ["optical-sar-analysis", "cloud-penetrating-mapping", "flood-extent-mapping"],
         "parametersConfig": {
-            "sarWeight": 0.5,
-            "opticalWeight": 0.5,
-            "coherenceFilter": True,
+            "sarSpecularThresholdDb": -20.0,
+            "sarDoubleBounceThresholdDb": -6.0,
         }
     },
     "rs-foundational-vlm": {
@@ -124,6 +122,53 @@ TOOL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "parametersConfig": {
             "quantization": "4-bit",
             "contextWindow": 4096,
+        }
+    },
+    "bigearthnet-classifier": {
+        "id": "bigearthnet-classifier",
+        "name": "BigEarthNet ResNet-18 Land-Cover Specialist",
+        "category": "Land-Cover & Vegetation Classification",
+        "architecture": "ResNet-18 (10-Band Sentinel-2 ONNX)",
+        "modalities": ["Sentinel-2 Multispectral (10-Band: B02-B12)"],
+        "supportedInputCount": 1,
+        "supportedFormats": ["GeoTIFF", "TIFF"],
+        "gsdRange": "10.0m – 20.0m",
+        "parameters": "11.2M",
+        "inputResolution": "120 × 120 px",
+        "description": "Official BigEarthNet v2.0 multi-label land-cover classification model trained on 10-band Sentinel-2 imagery across 19 Corine Land Cover classes.",
+        "status": "Connected",
+        "supportedTasks": ["land-cover-classification", "vegetation-classification", "corine-clc-mapping"],
+        "parametersConfig": {
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"],
+            "classesCount": 19,
+            "threshold": 0.5,
+        }
+    },
+    "florence2-vlm": {
+        "id": "florence2-vlm",
+        "name": "Florence-2 Vision-Language Specialist",
+        "category": "Vision-Language Foundation Model",
+        "architecture": "DaViT + BART-style Seq2Seq (microsoft/Florence-2-base)",
+        "modalities": ["Optical RGB", "Sentinel-2 RGB Composite"],
+        "supportedInputCount": 1,
+        "supportedFormats": ["PNG", "JPEG", "TIFF", "GeoTIFF"],
+        "gsdRange": "0.1m – 30.0m",
+        "parameters": "231M",
+        "inputResolution": "Dynamic / Multi-scale",
+        "description": "Locally hosted Florence-2-base vision-language model executing genuine image captioning, visual question answering, and text-guided phrase grounding on CPU.",
+        "status": "Connected",
+        "supportedTasks": [
+            "image_captioning",
+            "visual_question_answering",
+            "phrase_grounding",
+            "scene-captioning",
+            "vqa",
+            "text-guided-grounding",
+        ],
+        "parametersConfig": {
+            "device": "cpu",
+            "precision": "float32",
+            "checkpoint": "backend/models/checkpoints/florence2-base",
         }
     }
 }
@@ -158,9 +203,13 @@ class ToolRegistry:
             return TOOL_REGISTRY["bitemporal-diff-net"]
         elif mode == "optical-sar" or task_type == "optical-sar-analysis":
             return TOOL_REGISTRY["optical-sar-fusion-net"]
-        elif task_type == "text-guided-grounding":
-            return TOOL_REGISTRY["spatial-grounding-det"]
-        elif task_type == "scene-captioning":
-            return TOOL_REGISTRY["rs-captioning-engine"]
+        elif task_type in ["land-cover-classification", "vegetation-classification", "corine-clc-mapping"]:
+            return TOOL_REGISTRY["bigearthnet-classifier"]
+        elif task_type in ["text-guided-grounding", "phrase_grounding"]:
+            return TOOL_REGISTRY["florence2-vlm"]
+        elif task_type in ["scene-captioning", "image_captioning"]:
+            return TOOL_REGISTRY["florence2-vlm"]
+        elif task_type in ["vqa", "visual_question_answering"]:
+            return TOOL_REGISTRY["florence2-vlm"]
         else:
-            return TOOL_REGISTRY["rs-vqa-transformer"]
+            return TOOL_REGISTRY["florence2-vlm"]
