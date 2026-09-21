@@ -1,1 +1,1 @@
-"""SatQuery AI backend app package."""
+"""SatQuery AI Backend Package."""

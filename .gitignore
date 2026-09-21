@@ -1,14 +1,30 @@
+# Node & Frontend
 node_modules/
-build/
+**/node_modules/
 dist/
+**/dist/
+frontend/dist/
+build/
 coverage/
-.DS_Store
-*.log
-.env*
+.vite/
+**/.vite/
+*.timestamp-*.mjs
+*.tsbuildinfo
+
+# Environment variables and credentials
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
 !.env.example
+!**/.env.example
+*.key
+*.pem
 
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -20,16 +36,37 @@ ENV/
 backend/cache/
 *.egg-info/
 .pytest_cache/
+*.pytest_cache/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Storage runtime generated files (keep directory structure with .gitkeep)
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+backend/storage/processed/*
+!backend/storage/processed/.gitkeep
+backend/storage/evidence/*
+!backend/storage/evidence/.gitkeep
+backend/storage/reports/*
+!backend/storage/reports/.gitkeep
+backend/storage/scratch_*
+backend/storage/sessions.json
 
 # Model weights & caches (>100MB exceeds GitHub limits)
 *.bin
 *.incomplete
 .cache/
-**/__pycache__/
 **/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
